@@ -5,13 +5,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.rag_review import build_request, result_as_dict, review_clause  # noqa: E402
+from src.live_review import review_clause  # noqa: E402
+from src.rag_review import build_request  # noqa: E402
 from src.retrieval import LocalBM25Retriever  # noqa: E402
 
 
@@ -29,7 +31,7 @@ def main() -> None:
         print(json.dumps(build_request(args.housing_type, args.clause, evidence), indent=2))
         return
 
-    print(json.dumps(result_as_dict(review_clause(args.housing_type, args.clause, retriever)), indent=2))
+    print(json.dumps(asdict(review_clause(args.housing_type, args.clause, retriever)), indent=2))
 
 
 if __name__ == "__main__":

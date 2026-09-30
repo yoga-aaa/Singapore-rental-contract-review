@@ -39,11 +39,14 @@ def evaluate(ground_truth_path: Path, predictions_path: Path, registry_path: Pat
         if truth["ground_truth_label"] == ABSTAIN
         and prediction_rows[case_id]["predicted_label"] != ABSTAIN
     ]
+    abstain_count = sum(row["ground_truth_label"] == ABSTAIN for row in truth_rows.values())
 
     return {
         "case_count": len(truth_rows),
         "review_required_recall": true_positive / len(true_review) if true_review else 0.0,
         "review_required_precision": true_positive / len(predicted_review) if predicted_review else 0.0,
         "citation_validity": len(citation_valid) / len(non_abstaining) if non_abstaining else 0.0,
-        "unsafe_non_abstention_rate": len(unsafe_non_abstentions) / len(truth_rows) if truth_rows else 0.0,
+        "insufficient_evidence_count": abstain_count,
+        "unsafe_non_abstention_count": len(unsafe_non_abstentions),
+        "unsafe_non_abstention_rate": len(unsafe_non_abstentions) / abstain_count if abstain_count else 0.0,
     }

@@ -16,4 +16,4 @@ Before labelling the external evaluation set, do not add, remove, or replace a r
 
 ## Citation rule
 
-Every non-abstaining system result must identify a `source_id` and source section that exist in the registry. If no relevant source can be retrieved, the correct behaviour is `insufficient_evidence`.
+Every non-abstaining system result must identify a registered `source_id` and a page locator belonging to the same retrieved source chunk. This mechanical check confirms traceability, not that the page substantively supports the result. If no relevant source can be retrieved, the correct behaviour is `insufficient_evidence`.

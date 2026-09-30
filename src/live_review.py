@@ -14,6 +14,27 @@ from src.retrieval import LocalBM25Retriever, RetrievedChunk
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+COMPARISON_TOPICS = re.compile(
+    r"\b(deposit\w*|deduct\w*|rent\w*|repair\w*|maintenan\w*|terminat\w*|end|expir\w*|renew\w*|notice\w*|occup\w*|resid\w*|sublet\w*|utilit\w*|electric\w*|water|gas|sewer\w*|fee\w*|charg\w*|premises|flat|property)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def precheck_abstention_reason(clause_text: str) -> str | None:
+    """Avoid model calls for clauses without a concrete comparison point."""
+    if not COMPARISON_TOPICS.search(clause_text):
+        return "The clause does not state a tenancy term covered by the registered reference excerpts."
+    if re.search(r"\b(repair\w*|maintenance)\b", clause_text, flags=re.IGNORECASE):
+        assigns_responsibility = re.search(
+            r"\b(tenant|landlord|equally|jointly|split|share\w*|\d+\s*%|S\$\s*\d+)\b",
+            clause_text,
+            flags=re.IGNORECASE,
+        )
+        if not assigns_responsibility:
+            return "The clause does not identify who is responsible for repairs or how costs are allocated."
+    return None
+
+
 def local_api_key() -> str | None:
     """Read the ignored local .env only when no process-level key is set."""
     configured = os.getenv("OPENROUTER_API_KEY")
@@ -41,15 +62,18 @@ def validate_output(raw: dict[str, Any], chunks: list[RetrievedChunk], usage: di
 
     source_id = str(raw.get("source_id", ""))
     source_section = str(raw.get("source_section", ""))
-    retrieved_source_ids = {chunk.source_id for chunk in chunks}
-    exact_section_match = source_section in {chunk.section for chunk in chunks}
     page_match = re.fullmatch(r"Page\s+(\d+)", source_section, flags=re.IGNORECASE)
     printed_page = int(page_match.group(1)) if page_match else None
-    page_is_retrieved = printed_page is not None and any(
-        printed_page in {chunk.page_number, chunk.page_number - 1} for chunk in chunks
+    citation_is_retrieved = any(
+        chunk.source_id == source_id
+        and (
+            chunk.section == source_section
+            or (printed_page is not None and printed_page in {chunk.page_number, chunk.page_number - 1})
+        )
+        for chunk in chunks
     )
 
-    if raw.get("abstained") or source_id not in retrieved_source_ids or not (exact_section_match or page_is_retrieved):
+    if raw.get("abstained") or not citation_is_retrieved:
         return abstain("The model did not provide a citation from the retrieved reference excerpts.")
 
     return ReviewResult(
@@ -64,17 +88,20 @@ def validate_output(raw: dict[str, Any], chunks: list[RetrievedChunk], usage: di
     )
 
 
-def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retriever, limit: int = 3) -> ReviewResult:
+def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retriever, limit: int = 3, api_key: str | None = None) -> ReviewResult:
     if housing_type not in {"HDB", "Private Residential"}:
         return abstain("Select HDB or Private Residential before requesting a review.")
     if not clause_text.strip():
         return abstain("Provide a contract clause before requesting a review.")
+    precheck_reason = precheck_abstention_reason(clause_text)
+    if precheck_reason:
+        return abstain(precheck_reason)
 
     chunks = retriever.search(clause_text, housing_type, limit=limit)
     if not chunks:
         return abstain("No relevant registered reference evidence was retrieved.")
 
-    api_key = local_api_key()
+    api_key = api_key or local_api_key()
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is required in the environment or local .env file.")
     raw, usage = _request_openrouter(build_request(housing_type, clause_text, chunks), api_key)

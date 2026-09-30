@@ -22,9 +22,8 @@ def compact_text(text: str) -> str:
 
 
 def page_section(text: str, page_number: int) -> str:
-    """Return a stable page locator; later citation guards can refine it to a clause heading."""
-    headings = re.findall(r"\b(?:\d+\.\d+|\d+)\s+(?:[A-Z][A-Z ]{3,})", text)
-    return headings[0].strip() if headings else f"Page {page_number}"
+    """Use the physical PDF page, rather than an unreliable heading regex."""
+    return f"Page {page_number}"
 
 
 def main() -> None:
