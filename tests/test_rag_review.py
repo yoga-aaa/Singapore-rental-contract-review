@@ -13,6 +13,7 @@ CHUNK = RetrievedChunk(
     section="Operative Part 2.2 Security Deposit",
     text="The landlord must give written notice before a deduction.",
     score=1.0,
+    topics=("security_deposit",),
 )
 
 
@@ -30,6 +31,11 @@ class RAGReviewTests(unittest.TestCase):
             "follow_up_question": "Can you clarify?",
             "source_id": "NOT_A_SOURCE",
             "source_section": "Unknown",
+            "evidence": [{
+                "source_id": "NOT_A_SOURCE", "source_section": "Unknown",
+                "topic": "security_deposit",
+                "quote": "The landlord must give written notice before a deduction.",
+            }],
             "abstained": False,
         }
         result = validate_output(raw, [CHUNK])

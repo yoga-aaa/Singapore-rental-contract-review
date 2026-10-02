@@ -6,5 +6,6 @@ __pycache__/
 .streamlit/secrets.toml
 results/*.json
 results/*.csv
+!results/development_rag_predictions_v10.csv
 !results/.gitkeep
 

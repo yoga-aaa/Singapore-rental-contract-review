@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +32,7 @@ def score_citation_audit(predictions_path: Path, index_path: Path, audit_path: P
 
     with index_path.open(encoding="utf-8") as file:
         chunks = [json.loads(line) for line in file if line.strip()]
-    indexed_pages = {(chunk["source_id"], chunk["section"]): chunk for chunk in chunks}
+    indexed_sections = {(chunk["source_id"], chunk["section"]): chunk for chunk in chunks}
     assessments = audit.get("assessments")
     if not isinstance(assessments, list):
         raise ValueError("Citation audit must contain an assessments list.")
@@ -50,11 +49,28 @@ def score_citation_audit(predictions_path: Path, index_path: Path, audit_path: P
         pair = (prediction["source_id"], prediction["source_section"])
         if (assessment.get("source_id"), assessment.get("source_section")) != pair:
             raise ValueError(f"Citation audit locator differs from prediction for {case_id}.")
-        if not re.fullmatch(r"Page [1-9][0-9]*", pair[1]) or pair not in indexed_pages:
-            raise ValueError(f"Citation audit references an unknown PDF page for {case_id}.")
+        if pair not in indexed_sections:
+            raise ValueError(f"Citation audit references an unknown PDF section for {case_id}.")
         anchor = assessment.get("reference_anchor", "")
-        if not anchor or anchor.casefold() not in indexed_pages[pair]["text"][:visible_limit].casefold():
+        if not anchor or anchor.casefold() not in indexed_sections[pair]["text"][:visible_limit].casefold():
             raise ValueError(f"Citation audit anchor is absent from the model-visible page for {case_id}.")
+        if "evidence_json" in prediction:
+            try:
+                evidence = json.loads(prediction["evidence_json"])
+            except json.JSONDecodeError as error:
+                raise ValueError(f"Invalid evidence JSON for {case_id}.") from error
+            if not isinstance(evidence, list) or not evidence:
+                raise ValueError(f"Missing cited evidence for {case_id}.")
+            first = evidence[0]
+            if (first.get("source_id"), first.get("source_section")) != pair:
+                raise ValueError(f"Primary citation differs from evidence for {case_id}.")
+            for item in evidence:
+                cited = (item.get("source_id"), item.get("source_section"))
+                source = indexed_sections.get(cited)
+                if source is None or not isinstance(item.get("quote"), str):
+                    raise ValueError(f"Unknown cited evidence for {case_id}.")
+                if item["quote"].casefold() not in source["text"][:visible_limit].casefold():
+                    raise ValueError(f"Cited quote is absent from the model-visible section for {case_id}.")
         if assessment.get("verdict") not in VERDICTS or not assessment.get("note", "").strip():
             raise ValueError(f"Citation audit has an invalid verdict or empty note for {case_id}.")
         counts[assessment["verdict"]] += 1

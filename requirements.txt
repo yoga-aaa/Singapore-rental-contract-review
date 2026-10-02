@@ -1,2 +1,2 @@
-# Dependencies will be pinned when implementation begins.
+pypdf==6.10.0
 

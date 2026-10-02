@@ -1,30 +1,18 @@
 # Singapore Rental Contract Review
 
-An individual PE6201 project that compares a selected clause from a text-readable Singapore residential tenancy agreement with the relevant CEA reference material.
+An individual PE6201 prototype that compares selected English clauses from Singapore residential tenancy agreements with the relevant CEA agreement template. Choose **HDB** or **Private Residential** before review. The output is one of `review_required`, `no_material_difference_found`, or `insufficient_evidence`, with source-backed evidence when it does not abstain. It is **not legal advice** or a verdict that a contract is safe to sign.
 
-## Scope
+## Current result
 
-The MVP supports English, text-readable PDF tenancy agreements for either HDB flats or private residential properties. It returns one of three outcomes for a selected clause:
+The local development set has 30 synthetic cases. On the locked v10 run, review-required precision and recall are both 12/12, unsafe non-abstention is 0/5, and **substantively supported citation is 23/24 (95.83%) on an internal first pass**, counting one uncertain citation as not supported. This is a repeatedly tuned development result, not external validation. The 20 independently authored cases remain blind. Read the [v10 evidence and citation report](docs/retrieval_and_citation_v10.md) for the full denominator, SHA-256-locked audit, costs, limits and reproduction commands. Earlier [error](docs/development_error_audit.md) and [citation](docs/citation_audit_followup.md) audits remain for comparison.
 
-- `review_required`
-- `no_material_difference_found`
-- `insufficient_evidence`
+## Run locally
 
-Every non-abstaining result must cite a retrieved source passage. The system is a reference-comparison tool, not legal advice or a recommendation to sign a contract.
+Install `requirements.txt`, download the registered CEA PDFs with `python scripts/download_sources.py`, and build the local index with `python scripts/build_section_index.py`. Run tests with `python -m unittest discover -s tests -q`. The final synthetic predictions are in `results/development_rag_predictions_v10.csv`, and their separate human-review verdicts are in `data/development_citation_audit_v10.json`.
 
-## Repository status
+For a new live review, keep `OPENROUTER_API_KEY=...` in the ignored repository-root `.env`; never commit it. The live path uses clause-level retrieval, exact numbered evidence spans, a structured draft, a second evidence check, and safe abstention. The development runner caps calls and tokens and refuses to overwrite existing results.
 
-Project foundation and the first 30-case development evaluation are complete. See [the development error audit](docs/development_error_audit.md) and [citation audit follow-up](docs/citation_audit_followup.md) for corrected metrics, evidence-level citation findings and open label questions. The external cases supplied by an independent author are preserved in `data/external_cases_raw.csv` and must not be used for prompt tuning or rule changes.
+## Safety and scope
 
-## Planned structure
-
-- `src/` - application, retrieval, baseline, guardrail, and evaluation modules.
-- `data/` - source registry, development data, and locked external cases.
-- `scripts/` - reproducible source-download and evaluation commands.
-- `tests/` - automated tests.
-- `results/` - generated evaluation outputs; excluded from version control except `.gitkeep`.
-
-## Safety boundary
-
-The project will use only synthetic cases for development. It will not upload real contracts, personal data, NRIC/passport numbers, addresses, signatures, or chat logs to a model API.
+CEA templates are comparison references, not mandatory legal standards. HDB and private references never mix. The registered checklists are not used as contract-clause sources. This project is for synthetic development cases only: do not upload real contracts, addresses, NRIC/passport numbers, signatures or other personal data to the model API. The external 20-case set must not be used for further tuning before its separate evaluation.
 

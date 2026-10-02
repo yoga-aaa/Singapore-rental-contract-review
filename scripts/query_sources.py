@@ -17,8 +17,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("housing_type", choices=["HDB", "Private Residential"])
     parser.add_argument("query")
-    parser.add_argument("--index", type=Path, default=REPO_ROOT / "data" / "derived" / "source_pages.jsonl")
-    parser.add_argument("--limit", type=int, default=3)
+    parser.add_argument("--index", type=Path, default=REPO_ROOT / "data" / "derived" / "source_sections.jsonl")
+    parser.add_argument("--limit", type=int, default=4)
     args = parser.parse_args()
 
     retriever = LocalBM25Retriever.from_jsonl(args.index)

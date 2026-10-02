@@ -25,20 +25,25 @@ class DevelopmentGuardrailTests(unittest.TestCase):
 
     def test_citation_must_match_source_and_page_as_a_pair(self):
         chunks = [
-            RetrievedChunk("CEA_HDB_TA", "HDB", "template", "HDB", 5, "Page 5", "Deposit", 1.0),
-            RetrievedChunk("CEA_HDB_CHECK", "HDB", "checklist", "HDB check", 9, "Page 9", "Check", 1.0),
+            RetrievedChunk("CEA_HDB_TA", "HDB", "tenancy_agreement_template", "HDB", 5, "Page 5", "Security deposit reference text.", 1.0, topics=("security_deposit",)),
+            RetrievedChunk("CEA_HDB_CHECK", "HDB", "tenant_checklist", "HDB check", 9, "Page 9", "Unrelated checklist excerpt for a tenant.", 1.0, topics=("security_deposit",)),
         ]
         raw = {
             "label": "review_required",
             "clause_category": "security_deposit",
-            "reason": "Material difference.",
+            "reason": "The deposit notice process materially differs from the cited template.",
             "follow_up_question": "Why?",
             "source_id": "CEA_HDB_TA",
             "source_section": "Page 9",
+            "evidence": [{
+                "source_id": "CEA_HDB_TA", "source_section": "Page 9",
+                "topic": "security_deposit", "quote": "Security deposit reference text.",
+            }],
             "abstained": False,
         }
         self.assertTrue(validate_output(raw, chunks).abstained)
         raw["source_section"] = "Page 5"
+        raw["evidence"][0]["source_section"] = "Page 5"
         self.assertFalse(validate_output(raw, chunks).abstained)
 
     def test_unsafe_non_abstention_uses_abstain_cases_as_denominator(self):

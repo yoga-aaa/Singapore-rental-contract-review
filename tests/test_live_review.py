@@ -13,6 +13,7 @@ CHUNK = RetrievedChunk(
     section="Page 5",
     text="Security deposit reference text.",
     score=1.0,
+    topics=("security_deposit",),
 )
 
 
@@ -25,6 +26,10 @@ class LiveReviewTests(unittest.TestCase):
             "follow_up_question": "Can you clarify the notice process?",
             "source_id": "CEA_HDB_TA",
             "source_section": "Page 4",
+            "evidence": [{
+                "source_id": "CEA_HDB_TA", "source_section": "Page 4",
+                "topic": "security_deposit", "quote": "Security deposit reference text.",
+            }],
             "abstained": False,
         }
         result = validate_output(raw, [CHUNK])
@@ -39,8 +44,13 @@ class LiveReviewTests(unittest.TestCase):
             "follow_up_question": "Can you clarify the notice process?",
             "source_id": "UNKNOWN",
             "source_section": "Page 4",
+            "evidence": [{
+                "source_id": "CEA_HDB_TA", "source_section": "Page 4",
+                "topic": "security_deposit", "quote": "Security deposit reference text.",
+            }],
             "abstained": False,
         }
+        raw["evidence"][0]["source_id"] = "UNKNOWN"
         result = validate_output(raw, [CHUNK])
         self.assertTrue(result.abstained)
 
