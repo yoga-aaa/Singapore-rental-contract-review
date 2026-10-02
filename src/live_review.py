@@ -17,7 +17,7 @@ from src.direct_remaining import (
 )
 from src.direct_common import (
     direct_structural_repair_review, direct_unrestricted_termination_review,
-    direct_deposit_process_match, direct_advance_rent_utilities_match,
+    direct_deposit_process_match, direct_advance_rent_utilities_match, direct_notice_delivery_match,
 )
 from src.rag_review import LABELS, OUTPUT_SCHEMA, ReviewResult, _request_openrouter, abstain, build_request
 from src.retrieval import LocalBM25Retriever, RetrievedChunk, query_topics
@@ -96,6 +96,36 @@ def unsupported_fixed_amount_claim(reason: str, evidence: list[dict[str, str]]) 
     return False
 
 
+def unsupported_omission_review(reason: str, clause_text: str) -> bool:
+    """A missing phrase in one excerpt cannot establish that the contract excludes it."""
+    omission = re.search(
+        r"\b(?:omits?|omitted|missing|lacks?|does not (?:state|mention|specify)|"
+        r"fails? to (?:state|mention|specify))\b",
+        reason,
+        re.IGNORECASE,
+    )
+    if not omission:
+        return False
+    explicit_exclusion = re.search(
+        r"\b(?:without|need not|not required|regardless|at any time|unilaterally|"
+        r"no\s+(?:written\s+)?(?:notice|opportunity|right|consent|refund|limit|cap|process)|"
+        r"sole discretion)\b",
+        clause_text,
+        re.IGNORECASE,
+    )
+    return explicit_exclusion is None
+
+
+def without_unsupported_legal_verdicts(reason: str) -> str:
+    """Drop stand-alone legal verdicts that CEA template quotations cannot establish."""
+    sentences = re.split(r"(?<=[.!?])\s+", reason.strip())
+    unsupported = re.compile(
+        r"\b(?:legal|illegal|unlawful|enforceab\w*|validity|void|unfair|safe to sign)\b",
+        re.IGNORECASE,
+    )
+    return " ".join(sentence for sentence in sentences if not unsupported.search(sentence)).strip()
+
+
 def validate_output(
     raw: dict[str, Any],
     chunks: list[RetrievedChunk],
@@ -112,8 +142,17 @@ def validate_output(
     if label == "insufficient_evidence":
         return abstain(str(raw.get("reason") or "The available references were insufficient for a supported comparison."), usage, api_called=True)
 
-    if not isinstance(raw.get("reason"), str) or len(raw["reason"].strip()) < 25:
+    if not isinstance(raw.get("reason"), str):
         return abstain("The model did not explain the clause-to-reference comparison.", usage, api_called=True)
+    reason = without_unsupported_legal_verdicts(raw["reason"])
+    if len(reason) < 25:
+        return abstain("The model did not explain the clause-to-reference comparison.", usage, api_called=True)
+    if label == "review_required":
+        question = raw.get("follow_up_question")
+        if not isinstance(question, str) or len(question.strip()) < 20 or "?" not in question:
+            return abstain("The review flag did not include an actionable tenant question.", usage, api_called=True)
+        if clause_text is not None and unsupported_omission_review(reason, clause_text):
+            return abstain("An omitted phrase in one clause does not establish a contract-wide adverse term.", usage, api_called=True)
     evidence = raw.get("evidence")
     if raw.get("abstained") or not isinstance(evidence, list) or not 1 <= len(evidence) <= 3:
         return abstain("A non-abstaining result requires one to three reference excerpts.", usage, api_called=True)
@@ -163,14 +202,16 @@ def validate_output(
             {"source_id": source_id, "source_section": source_section, "topic": topic, "quote": quote.strip()}
         )
 
-    if unsupported_fixed_amount_claim(raw["reason"], verified):
+    if unsupported_fixed_amount_claim(reason, verified):
         return abstain("The explanation attributed an unsupported fixed amount to the reference.", usage, api_called=True)
-    if label == "review_required" and re.search(r"\balign\w*\b", raw["reason"], re.IGNORECASE):
-        if not re.search(r"\b(contrast\w*|differ\w*|conflict\w*|contradict\w*|whereas|instead)\b", raw["reason"], re.IGNORECASE):
+    if label == "review_required" and re.search(
+        r"\b(?:align\w*|match\w*|equivalent|same)\b", reason, re.IGNORECASE
+    ):
+        if not re.search(r"\b(contrast\w*|differ\w*|conflict\w*|contradict\w*|whereas|instead)\b", reason, re.IGNORECASE):
             return abstain("The explanation did not identify a concrete difference after describing alignment.", usage, api_called=True)
     if label == "no_material_difference_found" and re.search(
         r"\b(?:does not (?:explicitly )?(?:mention|forbid|prohibit|address)|not mentioned|silent about)\b",
-        raw["reason"], re.IGNORECASE,
+        reason, re.IGNORECASE,
     ):
         return abstain("Equivalence cannot be inferred solely from a reference's silence.", usage, api_called=True)
     primary = verified[0]
@@ -187,7 +228,7 @@ def validate_output(
     return ReviewResult(
         label=label,
         clause_category=str(raw["clause_category"]),
-        reason=str(raw["reason"]),
+        reason=reason,
         follow_up_question=str(raw["follow_up_question"]),
         source_id=primary["source_id"],
         source_section=primary["source_section"],
@@ -278,7 +319,7 @@ def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retri
         direct_complete_deposit_match, direct_deferred_deposit_review, direct_unlimited_repair_review,
         direct_variable_notice_review, direct_occupant_documents_match, direct_discretionary_utilities_review,
         direct_structural_repair_review, direct_unrestricted_termination_review,
-        direct_deposit_process_match, direct_advance_rent_utilities_match,
+        direct_deposit_process_match, direct_advance_rent_utilities_match, direct_notice_delivery_match,
     ):
         direct_match = matcher(clause_text, chunks)
         if direct_match is not None:
@@ -291,6 +332,6 @@ def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retri
     draft = validate_output(raw, chunks, usage, clause_text)
     if draft.abstained:
         return draft
-    resolved_raw = {**raw, "evidence": list(draft.evidence)}
+    resolved_raw = {**raw, "reason": draft.reason, "evidence": list(draft.evidence)}
     checked, verification_usage = verify_candidate(housing_type, clause_text, resolved_raw, api_key)
     return apply_verification(resolved_raw, checked, chunks, merged_usage(usage, verification_usage), clause_text)

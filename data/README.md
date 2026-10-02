@@ -4,7 +4,7 @@
 
 `external_cases_raw.csv` is the verbatim set of 20 externally authored cases received on 28 September 2026. Treat it as immutable input.
 
-Before running the final evaluation, create a separate ground-truth file containing the label and expected reference source for each case. Do this once, before the system is tested on these cases. Do not use the external cases to tune prompts, retrieval settings, rules, or thresholds.
+An assistant-authored `external_cases_ground_truth.csv` was committed as a provisional v0 proposal before any external model run. It was disputed after the product goal was clarified and is **not** independently reviewed ground truth. Before the final evaluation, an independent reviewer must create and lock `external_cases_ground_truth.reviewed.csv` with one label and expected reference for each case, following `labeling_guide.md`. Do not use external predictions to tune prompts, retrieval settings, rules or thresholds.
 
 ## Important quality note
 
@@ -13,4 +13,3 @@ Several raw clauses include meta-commentary such as "the clause does not state" 
 ## Data restrictions
 
 Do not commit real tenancy agreements or personal data. Reference sources must be recorded by URL and retrieval date; do not redistribute source documents unless their licences permit it.
-

@@ -86,3 +86,28 @@ def direct_advance_rent_utilities_match(text: str, chunks: list[RetrievedChunk])
         follow_up_question="", source_id=rent.source_id, source_section=rent.section,
         abstained=False, evidence=(_entry(rent, "rent"), _entry(utilities, "utilities")),
     )
+
+
+def direct_notice_delivery_match(text: str, chunks: list[RetrievedChunk]) -> ReviewResult | None:
+    """Accept equivalent personal-delivery/posting methods without lexical matching."""
+    if len(text) > 240 or not _matches(
+        text,
+        r"\bnotice\b",
+        r"\b(?:delivered personally|delivered by hand|hand-delivered|personal delivery)\b",
+        r"\bCertificate of Posting\b",
+        r"\baddress\b",
+    ):
+        return None
+    if re.search(r"\b(?:only|except|unless|email|text message|emoji|whatsapp|immediately)\b", text, re.IGNORECASE):
+        return None
+    source = next((item for item in chunks if item.clause_id in {"11.2", "12.2"} and _matches(
+        item.text, r"delivered to the Tenant personally", r"Certificate of Posting", r"address"
+    )), None)
+    if source is None:
+        return None
+    return ReviewResult(
+        label="no_material_difference_found", clause_category="termination_notice",
+        reason="The clause and cited template both allow notice by personal delivery or Certificate of Posting to the stated address; the different phrasing does not change the service methods.",
+        follow_up_question="", source_id=source.source_id, source_section=source.section,
+        abstained=False, evidence=(_entry(source, "termination_notice"),),
+    )

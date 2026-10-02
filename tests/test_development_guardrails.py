@@ -32,7 +32,7 @@ class DevelopmentGuardrailTests(unittest.TestCase):
             "label": "review_required",
             "clause_category": "security_deposit",
             "reason": "The deposit notice process materially differs from the cited template.",
-            "follow_up_question": "Why?",
+            "follow_up_question": "Will deductions require written notice first?",
             "source_id": "CEA_HDB_TA",
             "source_section": "Page 9",
             "evidence": [{

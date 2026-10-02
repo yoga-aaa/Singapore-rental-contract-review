@@ -1,4 +1,4 @@
-"""Run the frozen v10 pipeline once on the 20 sanitized external holdout clauses.
+"""Run the frozen risk-focused pipeline once on 20 sanitized external clauses.
 
 This runner deliberately never reads the ground-truth file. Do not change the
 review pipeline or use these predictions for further tuning.
@@ -23,7 +23,8 @@ from src.retrieval import LocalBM25Retriever  # noqa: E402
 
 CASES = REPO_ROOT / "data" / "external_cases_sanitized.csv"
 INDEX = REPO_ROOT / "data" / "derived" / "source_sections.jsonl"
-OUTPUT = REPO_ROOT / "results" / "external_rag_predictions_v10.csv"
+REVIEWED_TRUTH = REPO_ROOT / "data" / "external_cases_ground_truth.reviewed.csv"
+OUTPUT = REPO_ROOT / "results" / "external_rag_predictions_v12.csv"
 MAX_MODEL_CALLS = 40
 MAX_TOTAL_TOKENS = 60000
 TOKEN_RESERVE_PER_CLAUSE = 8000
@@ -48,6 +49,8 @@ def read_holdout() -> list[dict[str, str]]:
 
 def main() -> None:
     cases = read_holdout()
+    if not REVIEWED_TRUTH.exists():
+        raise RuntimeError("Independent-reviewed external labels must be locked before prediction.")
     if OUTPUT.exists():
         raise FileExistsError(f"The locked external predictions already exist: {OUTPUT}")
     api_key = local_api_key()

@@ -23,7 +23,7 @@ class EvidenceSpanTests(unittest.TestCase):
         raw = {
             "label": "review_required", "clause_category": "security_deposit",
             "reason": "The clause allows an immediate deduction but the reference requires written notice first.",
-            "follow_up_question": "", "source_id": chunk.source_id,
+            "follow_up_question": "Will deductions require written notice first?", "source_id": chunk.source_id,
             "source_section": chunk.section, "abstained": False,
             "evidence": [{"evidence_id": span.evidence_id, "topic": "security_deposit"}],
         }
