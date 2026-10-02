@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from src.evaluate import evaluate  # noqa: E402
-from src.live_review import review_clause  # noqa: E402
+from src.live_review import ModelReviewRequired, review_clause  # noqa: E402
 from src.retrieval import LocalBM25Retriever  # noqa: E402
 
 
@@ -23,6 +23,7 @@ FIELDS = [
     "evidence_json", "reason", "follow_up_question", "abstained", "api_called", "api_calls",
     "prompt_tokens", "completion_tokens", "total_tokens",
 ]
+GROUNDED_FIELDS = [*FIELDS, "comparisons_json"]
 
 
 def main() -> None:
@@ -52,13 +53,19 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     prompt_tokens = completion_tokens = model_calls = 0
     with args.output.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=FIELDS)
+        writer = csv.DictWriter(file, fieldnames=GROUNDED_FIELDS)
         writer.writeheader()
         file.flush()
         for position, case in enumerate(cases, start=1):
-            if model_calls >= args.max_model_calls or prompt_tokens + completion_tokens >= args.max_total_tokens:
-                raise RuntimeError(f"Budget stop after {position - 1} cases; partial predictions saved at {args.output}.")
-            result = review_clause(case["housing_type"], case["clause_text"], retriever, limit=args.limit)
+            try:
+                result = review_clause(case["housing_type"], case["clause_text"], retriever,
+                                       limit=args.limit, allow_api=False)
+            except ModelReviewRequired:
+                if model_calls + 2 > args.max_model_calls:
+                    raise RuntimeError("Budget stop: fewer than two model calls remain; partial predictions preserved.")
+                if prompt_tokens + completion_tokens >= args.max_total_tokens:
+                    raise RuntimeError(f"Token budget stop after {position - 1} cases; partial predictions saved at {args.output}.")
+                result = review_clause(case["housing_type"], case["clause_text"], retriever, limit=args.limit)
             result_data = asdict(result)
             usage = result_data["usage"] or {}
             if result.api_called:
@@ -78,6 +85,7 @@ def main() -> None:
                 "prompt_tokens": usage.get("prompt_tokens", 0),
                 "completion_tokens": usage.get("completion_tokens", 0),
                 "total_tokens": usage.get("total_tokens", 0),
+                "comparisons_json": json.dumps(result_data["comparisons"], ensure_ascii=False),
             }
             writer.writerow(row)
             file.flush()

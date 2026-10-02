@@ -21,6 +21,8 @@ def direct_structural_repair_review(text: str, chunks: list[RetrievedChunk]) -> 
     if len(text) > 300 or not _matches(text, r"\bTenant\b", r"\b(?:all|every)\b.*\brepair\w*\b",
                                        r"\bstructural\b", r"\b(?:pipes|wiring)\b", r"\b(?:whatever|regardless)\b"):
         return None
+    if not re.search(r"\bTenant\b\s+(?:(?:shall|must|will)\s+)?(?:pays?|bears?)\b[^.;]*\brepair\w*\b", text, re.I):
+        return None
     source = next((item for item in chunks if item.clause_id == "7.1" and "structural condition" in item.text
                    and "Landlord shall bear the full cost" in item.text), None)
     if source is None:
@@ -37,6 +39,8 @@ def direct_structural_repair_review(text: str, chunks: list[RetrievedChunk]) -> 
 def direct_unrestricted_termination_review(text: str, chunks: list[RetrievedChunk]) -> ReviewResult | None:
     if len(text) > 260 or not _matches(text, r"\b(?:end|terminat\w*)\b", r"\bany time\b",
                                        r"\bany reason\b", r"\b(?:text message|same day)\b"):
+        return None
+    if not re.search(r"\bLandlord\b\s+(?:may|can)\s+(?:end|terminate)\b", text, re.I):
         return None
     source = next((item for item in chunks if item.clause_id in {"7.2", "8.2"}
                    and _matches(item.text, r"terminated by the Landlord in writing", r"seven \(7\) days",

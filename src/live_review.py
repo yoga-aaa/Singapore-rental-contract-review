@@ -1,14 +1,17 @@
-"""Production-ready single-clause RAG entrypoint with resilient PDF page citations."""
+"""Guarded single-clause comparison with local and model-backed review paths."""
 
 from __future__ import annotations
 
 import os
 import re
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 from src.evidence_spans import spans_for_chunks
 from src.evidence_verifier import merged_usage, verify_candidate
+from src.comparison_checks import comparison_issue, direct_no_review_allowed, omission_issue
+from src.grounding import grounding_issue
 from src.direct_matches import direct_minor_repair_match, direct_named_occupancy_match
 from src.direct_differences import direct_late_rent_review, direct_discretionary_rent_review
 from src.direct_remaining import (
@@ -97,30 +100,14 @@ def unsupported_fixed_amount_claim(reason: str, evidence: list[dict[str, str]]) 
 
 
 def unsupported_omission_review(reason: str, clause_text: str) -> bool:
-    """A missing phrase in one excerpt cannot establish that the contract excludes it."""
-    omission = re.search(
-        r"\b(?:omits?|omitted|missing|lacks?|does not (?:state|mention|specify)|"
-        r"fails? to (?:state|mention|specify))\b",
-        reason,
-        re.IGNORECASE,
-    )
-    if not omission:
-        return False
-    explicit_exclusion = re.search(
-        r"\b(?:without|need not|not required|regardless|at any time|unilaterally|"
-        r"no\s+(?:written\s+)?(?:notice|opportunity|right|consent|refund|limit|cap|process)|"
-        r"sole discretion)\b",
-        clause_text,
-        re.IGNORECASE,
-    )
-    return explicit_exclusion is None
+    return omission_issue(reason, clause_text)
 
 
 def without_unsupported_legal_verdicts(reason: str) -> str:
     """Drop stand-alone legal verdicts that CEA template quotations cannot establish."""
     sentences = re.split(r"(?<=[.!?])\s+", reason.strip())
     unsupported = re.compile(
-        r"\b(?:legal|illegal|unlawful|enforceab\w*|validity|void|unfair|safe to sign)\b",
+        r"\b(?:legal(?!\s+(?:costs?|fees?|expenses?))|illegal|unlawful|enforceab\w*|validity|void|unfair|safe to sign)\b",
         re.IGNORECASE,
     )
     return " ".join(sentence for sentence in sentences if not unsupported.search(sentence)).strip()
@@ -131,13 +118,17 @@ def validate_output(
     chunks: list[RetrievedChunk],
     usage: dict[str, int] | None = None,
     clause_text: str | None = None,
+    require_grounding: bool = False,
+    structural_only: bool = False,
 ) -> ReviewResult:
     required_fields = set(OUTPUT_SCHEMA["schema"]["required"])
+    if require_grounding or (isinstance(raw, dict) and "comparisons" in raw):
+        required_fields.add("comparisons")
     if not isinstance(raw, dict) or set(raw) != required_fields:
         return abstain("The model output did not match the required review schema.", usage, api_called=True)
 
     label = raw.get("label")
-    if label not in LABELS or not isinstance(raw.get("abstained"), bool):
+    if not isinstance(label, str) or label not in LABELS or not isinstance(raw.get("abstained"), bool):
         return abstain("The model output contained an invalid label or abstention state.", usage, api_called=True)
     if label == "insufficient_evidence":
         return abstain(str(raw.get("reason") or "The available references were insufficient for a supported comparison."), usage, api_called=True)
@@ -145,13 +136,19 @@ def validate_output(
     if not isinstance(raw.get("reason"), str):
         return abstain("The model did not explain the clause-to-reference comparison.", usage, api_called=True)
     reason = without_unsupported_legal_verdicts(raw["reason"])
+    if require_grounding and (not isinstance(raw.get("clause_category"), str)
+                             or raw["clause_category"] not in OUTPUT_SCHEMA["schema"]["properties"]["clause_category"]["enum"]
+                             or not isinstance(raw.get("follow_up_question"), str)):
+        return abstain("The model returned invalid review fields.", usage, api_called=True)
+    if require_grounding and (len(reason) > 500 or len(raw["follow_up_question"]) > 300):
+        return abstain("The model returned an unbounded explanation or question.", usage, api_called=True)
     if len(reason) < 25:
         return abstain("The model did not explain the clause-to-reference comparison.", usage, api_called=True)
     if label == "review_required":
         question = raw.get("follow_up_question")
         if not isinstance(question, str) or len(question.strip()) < 20 or "?" not in question:
             return abstain("The review flag did not include an actionable tenant question.", usage, api_called=True)
-        if clause_text is not None and unsupported_omission_review(reason, clause_text):
+        if not structural_only and clause_text is not None and unsupported_omission_review(reason, clause_text):
             return abstain("An omitted phrase in one clause does not establish a contract-wide adverse term.", usage, api_called=True)
     evidence = raw.get("evidence")
     if raw.get("abstained") or not isinstance(evidence, list) or not 1 <= len(evidence) <= 3:
@@ -162,6 +159,8 @@ def validate_output(
         if not isinstance(item, dict):
             return abstain("An evidence entry did not match the citation schema.", usage, api_called=True)
         if set(item) == {"evidence_id", "topic"}:
+            if not isinstance(item["evidence_id"], str) or not isinstance(item["topic"], str):
+                return abstain("The selected evidence ID or topic was invalid.", usage, api_called=True)
             span = indexed_spans.get(item["evidence_id"])
             if span is None or item["topic"] not in span.chunk.topics or len(normalized_quote(span.quote)) < 25:
                 return abstain("The selected evidence ID or topic was invalid.", usage, api_called=True)
@@ -170,9 +169,11 @@ def validate_output(
                 "source_section": span.chunk.section,
                 "topic": item["topic"],
                 "quote": span.quote,
+                "context_quote": span.chunk.text[:2200],
             })
             continue
-        if set(item) != {"source_id", "source_section", "topic", "quote"}:
+        evidence_fields = {"source_id", "source_section", "topic", "quote"}
+        if set(item) not in (evidence_fields, evidence_fields | {"context_quote"}):
             return abstain("An evidence entry did not match the citation schema.", usage, api_called=True)
         source_id = item["source_id"]
         source_section = item["source_section"]
@@ -198,18 +199,26 @@ def validate_output(
             for chunk in matching
         ):
             return abstain("The citation quote or topic was not supported by the retrieved reference excerpt.", usage, api_called=True)
-        verified.append(
-            {"source_id": source_id, "source_section": source_section, "topic": topic, "quote": quote.strip()}
-        )
+        context = item.get("context_quote")
+        if context is not None and (not isinstance(context, str) or not any(
+            context == chunk.text[:2200] and quote in context for chunk in matching
+        )):
+            return abstain("The citation context was not the registered model-visible section.", usage, api_called=True)
+        if require_grounding and not any(chunk.section == source_section and quote in chunk.text[:2200] for chunk in matching):
+            return abstain("A grounded comparison requires an exact reference quote and locator.", usage, api_called=True)
+        entry = {"source_id": source_id, "source_section": source_section, "topic": topic, "quote": quote.strip()}
+        if context is not None:
+            entry["context_quote"] = context
+        verified.append(entry)
 
-    if unsupported_fixed_amount_claim(reason, verified):
+    if not structural_only and unsupported_fixed_amount_claim(reason, verified):
         return abstain("The explanation attributed an unsupported fixed amount to the reference.", usage, api_called=True)
-    if label == "review_required" and re.search(
+    if not structural_only and label == "review_required" and re.search(
         r"\b(?:align\w*|match\w*|equivalent|same)\b", reason, re.IGNORECASE
     ):
         if not re.search(r"\b(contrast\w*|differ\w*|conflict\w*|contradict\w*|whereas|instead)\b", reason, re.IGNORECASE):
             return abstain("The explanation did not identify a concrete difference after describing alignment.", usage, api_called=True)
-    if label == "no_material_difference_found" and re.search(
+    if not structural_only and label == "no_material_difference_found" and re.search(
         r"\b(?:does not (?:explicitly )?(?:mention|forbid|prohibit|address)|not mentioned|silent about)\b",
         reason, re.IGNORECASE,
     ):
@@ -220,10 +229,22 @@ def validate_output(
     if clause_text is not None:
         needed_topics = query_topics(clause_text)
         cited_topics = {item["topic"] for item in verified}
-        if label == "no_material_difference_found" and not needed_topics.issubset(cited_topics):
+        if not structural_only and label == "no_material_difference_found" and not needed_topics.issubset(cited_topics):
             return abstain("The reference evidence did not cover every material topic in the clause.", usage, api_called=True)
         if label == "review_required" and needed_topics and not needed_topics.intersection(cited_topics):
             return abstain("The material difference was not tied to a relevant reference topic.", usage, api_called=True)
+    comparisons = raw.get("comparisons")
+    if require_grounding or comparisons is not None:
+        issue = grounding_issue(comparisons, clause_text, verified, label, query_topics(clause_text or ""), check_decision=not structural_only)
+        if issue:
+            return abstain(issue, usage, api_called=True)
+    if not structural_only and clause_text is not None:
+        for item in comparisons or []:
+            if normalized_quote(without_unsupported_legal_verdicts(item["reference_claim"])) != normalized_quote(item["reference_claim"]):
+                return abstain("A structured reference claim included an unsupported legal verdict.", usage, api_called=True)
+        issue = comparison_issue(label, reason + " " + str(raw["follow_up_question"]), clause_text, verified, comparisons)
+        if issue:
+            return abstain(issue, usage, api_called=True)
 
     return ReviewResult(
         label=label,
@@ -236,6 +257,7 @@ def validate_output(
         usage=usage,
         evidence=tuple(verified),
         api_called=True,
+        comparisons=tuple(comparisons or []),
     )
 
 
@@ -283,25 +305,64 @@ def apply_verification(
     chunks: list[RetrievedChunk],
     usage: dict[str, int],
     clause_text: str,
+    require_grounding: bool = False,
 ) -> ReviewResult:
     """Only release a result approved or corrected using its exact cited evidence."""
-    if not isinstance(verification, dict) or set(verification) != {"decision", "label", "reason", "issue"}:
+    expected = {"decision", "label", "reason", "issue"}
+    structured = require_grounding or "comparisons" in raw
+    if structured:
+        expected.update({"comparison_verdicts", "follow_up_question"})
+    if not isinstance(verification, dict) or set(verification) != expected:
         return abstain("The independent evidence check returned an invalid response.", usage, api_called=True)
+    if any(not isinstance(verification[field], str) for field in ("decision", "label", "reason", "issue")):
+        return abstain("The independent evidence check returned invalid field types.", usage, api_called=True)
+    if structured and (not isinstance(verification["follow_up_question"], str)
+                       or (verification["decision"] == "approve" and (
+                           verification["reason"] != raw["reason"]
+                           or verification["follow_up_question"] != raw["follow_up_question"]))):
+        return abstain("The independent approval changed the explanation or question without revision.", usage, api_called=True)
+    if structured:
+        comparisons = raw.get("comparisons")
+        verdicts = verification.get("comparison_verdicts")
+        if not isinstance(comparisons, list) or not isinstance(verdicts, list) or len(verdicts) != len(comparisons):
+            return abstain("The independent evidence check did not assess every comparison.", usage, api_called=True)
+        reviewed: list[dict] = []
+        for index, (comparison, verdict) in enumerate(zip(comparisons, verdicts)):
+            if not isinstance(verdict, dict) or set(verdict) != {"comparison_index", "verdict", "relation", "note", "tenant_consequence", "reference_claim"}:
+                return abstain("The independent comparison assessment was malformed.", usage, api_called=True)
+            if type(verdict["comparison_index"]) is not int or verdict["comparison_index"] != index:
+                return abstain("The independent comparison indices did not match.", usage, api_called=True)
+            if verdict["verdict"] != "supported" or not isinstance(verdict["note"], str) or len(verdict["note"].strip()) < 12:
+                return abstain("The independent evidence check could not substantiate every comparison.", usage, api_called=True)
+            if verification["decision"] == "approve" and verdict["relation"] != comparison["relation"]:
+                return abstain("Approval changed a comparison without a revision.", usage, api_called=True)
+            if verification["decision"] == "approve" and verdict["tenant_consequence"] != comparison["tenant_consequence"]:
+                return abstain("Approval changed a tenant consequence without a revision.", usage, api_called=True)
+            if verification["decision"] == "approve" and verdict["reference_claim"] != comparison["reference_claim"]:
+                return abstain("Approval changed a reference claim without a revision.", usage, api_called=True)
+            reviewed.append({**comparison, "relation": verdict["relation"],
+                             "tenant_consequence": verdict["tenant_consequence"], "reference_claim": verdict["reference_claim"]})
+        raw = {**raw, "comparisons": reviewed}
     decision = verification["decision"]
     if decision == "approve" and verification["label"] == raw["label"]:
-        candidate = validate_output(raw, chunks, usage, clause_text)
+        candidate = validate_output(raw, chunks, usage, clause_text, require_grounding=require_grounding)
         return candidate
     if decision == "revise" and verification["label"] in LABELS and isinstance(verification["reason"], str):
         if verification["label"] == "insufficient_evidence":
             return abstain("The independent evidence check found the draft citation insufficient.", usage, api_called=True)
         revised = {**raw, "label": verification["label"], "reason": verification["reason"],
                    "follow_up_question": "" if verification["label"] == "no_material_difference_found"
-                   else raw["follow_up_question"]}
-        return validate_output(revised, chunks, usage, clause_text)
+                   else verification.get("follow_up_question", raw["follow_up_question"])}
+        return validate_output(revised, chunks, usage, clause_text, require_grounding=require_grounding)
     return abstain("The independent evidence check could not substantiate the draft comparison.", usage, api_called=True)
 
 
-def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retriever, limit: int = 4, api_key: str | None = None) -> ReviewResult:
+class ModelReviewRequired(RuntimeError):
+    """An offline check reached the model stage; this is not an abstention prediction."""
+
+
+def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retriever, limit: int = 4,
+                  api_key: str | None = None, allow_api: bool = True) -> ReviewResult:
     if housing_type not in {"HDB", "Private Residential"}:
         return abstain("Select HDB or Private Residential before requesting a review.")
     if not clause_text.strip():
@@ -310,7 +371,8 @@ def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retri
     if precheck_reason:
         return abstain(precheck_reason)
 
-    chunks = retriever.search(clause_text, housing_type, limit=limit)
+    chunks = [chunk for chunk in retriever.search(clause_text, housing_type, limit=limit)
+              if chunk.housing_type == housing_type and chunk.source_kind == "tenancy_agreement_template"]
     if not chunks:
         return abstain("No relevant registered reference evidence was retrieved.")
     for matcher in (
@@ -323,15 +385,23 @@ def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retri
     ):
         direct_match = matcher(clause_text, chunks)
         if direct_match is not None:
-            return direct_match
+            if direct_match.label == "no_material_difference_found" and not direct_no_review_allowed(clause_text):
+                continue
+            raw_direct = {key: getattr(direct_match, key) for key in OUTPUT_SCHEMA["schema"]["required"]}
+            raw_direct["evidence"] = list(direct_match.evidence)
+            validated = validate_output(raw_direct, chunks, clause_text=clause_text)
+            if not validated.abstained:
+                return replace(validated, api_called=False)
 
+    if not allow_api:
+        raise ModelReviewRequired("Local rules did not settle this clause; model evaluation was not run.")
     api_key = api_key or local_api_key()
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is required in the environment or local .env file.")
     raw, usage = _request_openrouter(build_request(housing_type, clause_text, chunks), api_key)
-    draft = validate_output(raw, chunks, usage, clause_text)
+    draft = validate_output(raw, chunks, usage, clause_text, require_grounding=True, structural_only=True)
     if draft.abstained:
         return draft
     resolved_raw = {**raw, "reason": draft.reason, "evidence": list(draft.evidence)}
     checked, verification_usage = verify_candidate(housing_type, clause_text, resolved_raw, api_key)
-    return apply_verification(resolved_raw, checked, chunks, merged_usage(usage, verification_usage), clause_text)
+    return apply_verification(resolved_raw, checked, chunks, merged_usage(usage, verification_usage), clause_text, require_grounding=True)

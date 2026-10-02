@@ -60,6 +60,8 @@ def direct_unlimited_repair_review(text: str, chunks: list[RetrievedChunk]) -> R
     if len(text) > 290 or not _has(text, r"\bTenant\b", r"\b(?:all|every)\b.*\brepairs?\b",
                                     r"\b(?:regardless|whatever)\b", r"\bcost\b"):
         return None
+    if not re.search(r"\bTenant\b\s+(?:(?:shall|must|will)\s+)?(?:pays?|bears?)\b[^.;]*\brepairs?\b", text, re.I):
+        return None
     if re.search(r"structural|concealed", text, re.IGNORECASE):
         return None
     schedule = _find(chunks, "ITEM10")
@@ -95,6 +97,8 @@ def direct_occupant_documents_match(text: str, chunks: list[RetrievedChunk]) -> 
     if len(text) > 260 or not _has(text, r"\bforeign\b", r"\boccup\w*\b", r"\bdocuments?\b",
                                     r"\blawful\b", r"\bwhen required by the Landlord\b"):
         return None
+    if not re.search(r"\bTenant\b\s+(?:shall|must|will)\s+(?:provide|produce)\b", text, re.I):
+        return None  # The template places production on the tenant, not the occupiers.
     operative = _find(chunks, "3.3")
     if operative is None or not _has(operative.text, r"Where required by the Landlord", r"documents of all occupiers"):
         return None

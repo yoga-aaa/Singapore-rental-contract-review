@@ -19,6 +19,12 @@ def direct_minor_repair_match(clause_text: str, chunks: list[RetrievedChunk]) ->
     )
     if any(not re.search(pattern, clause_text, re.IGNORECASE) for pattern in patterns):
         return None
+    if not re.search(
+        r"\bLandlord\b[^.;]{0,50}\b(?:pays?|bears?|responsible)\b[^.;]{0,50}\b(?:above|excess|exceed\w*)\b|"
+        r"\bcosts?\b[^.;]{0,35}\b(?:above|excess|exceed\w*)\b[^.;]{0,35}\b(?:borne|paid|covered) by (?:the )?Landlord\b",
+        clause_text, re.I,
+    ):
+        return None
     schedule = next((item for item in chunks if item.clause_id == "ITEM10" and "S$____" in item.text), None)
     operative = next((item for item in chunks if item.clause_id == "4.2" and "ITEM 10" in item.text), None)
     if schedule is None or operative is None:
@@ -51,6 +57,8 @@ def direct_named_occupancy_match(clause_text: str, chunks: list[RetrievedChunk])
     if not re.search(r"\b(?:named|listed)\b", clause_text, re.IGNORECASE) or not re.search(
         r"\boccup\w*\b", clause_text, re.IGNORECASE
     ):
+        return None
+    if not re.search(r"\b(?:only|limited to)\b", clause_text, re.I):
         return None
     schedule = next((item for item in chunks if item.clause_id == "ITEM6" and "NAME(S) OF OCCUPIER(S)" in item.text), None)
     operative = next((item for item in chunks if item.clause_id == "1.1" and "ITEM" in item.text), None)

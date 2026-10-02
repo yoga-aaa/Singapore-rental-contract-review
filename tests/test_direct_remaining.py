@@ -40,10 +40,12 @@ class RemainingDirectMatchTests(unittest.TestCase):
         clause = "Either party may end the tenancy after sufficient notice, with the length decided later by the Landlord."
         self.assertEqual(direct_variable_notice_review(clause, [source]).label, "review_required")
 
-    def test_occupier_documents_match_explicit_reference_duty(self):
+    def test_document_production_requires_the_same_actor(self):
         source = chunk("3.3", "occupancy_subletting", "Where required by the Landlord, the Tenant shall produce documents of all occupiers evidencing lawful residence.")
         clause = "Foreign occupants must provide documents showing lawful residence when required by the Landlord."
-        self.assertEqual(direct_occupant_documents_match(clause, [source]).label,
+        self.assertIsNone(direct_occupant_documents_match(clause, [source]))
+        same_actor = "The Tenant must provide foreign occupants' documents showing lawful residence when required by the Landlord."
+        self.assertEqual(direct_occupant_documents_match(same_actor, [source]).label,
                          "no_material_difference_found")
 
     def test_arbitrary_utilities_excess_is_reviewed_without_inventing_bill_rule(self):

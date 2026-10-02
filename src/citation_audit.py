@@ -73,6 +73,8 @@ def score_citation_audit(predictions_path: Path, index_path: Path, audit_path: P
                     raise ValueError(f"Unknown cited evidence for {case_id}.")
                 if item["quote"].casefold() not in source["text"][:visible_limit].casefold():
                     raise ValueError(f"Cited quote is absent from the model-visible section for {case_id}.")
+                if "context_quote" in item and item["context_quote"] != source["text"][:visible_limit]:
+                    raise ValueError(f"Cited context differs from the model-visible section for {case_id}.")
         if assessment.get("verdict") not in VERDICTS or not assessment.get("note", "").strip():
             raise ValueError(f"Citation audit has an invalid verdict or empty note for {case_id}.")
         counts[assessment["verdict"]] += 1

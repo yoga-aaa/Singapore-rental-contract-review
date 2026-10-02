@@ -24,21 +24,50 @@ def tokenize(text: str) -> list[str]:
 
 
 def query_topics(query: str) -> set[str]:
-    """Identify reference topics without consulting case labels or predictions."""
-    lowered = query.lower()
-    if re.search(r"deposit|deduct|refund", lowered):
-        return {"security_deposit"}
-    if re.search(r"repair|structural|plumbing|wiring|maintenance(?! fee)", lowered):
-        return {"minor_repair"}
-    if re.search(r"occup|resid|sublet|anyone|people|immigration|foreign", lowered):
-        return {"occupancy_subletting"}
-    if re.search(r"terminat|end (?:the |this )?tenancy|notice|breach|emoji", lowered):
-        return {"termination_notice"}
+    """Collect independent obligations; do not stop at the first topic keyword.
+
+    Deposit sizing, set-off and deduction lists do not by themselves introduce
+    separate rent, repair or utility obligations. Notice/cure within those
+    processes is not automatically a tenancy-termination topic.
+    """
     topics: set[str] = set()
-    if re.search(r"utilit|water|electric|gas|sewer", lowered):
-        topics.add("utilities")
-    if re.search(r"rent|late|fee", lowered) or (not topics and "charge" in lowered):
-        topics.add("rent")
+    process_context: str | None = None
+    for sentence in re.split(r"(?<=[.;])\s+", query.lower()):
+        deposit = bool(re.search(r"\b(?:deposit\w*|deduct\w*|refund\w*)\b", sentence))
+        repair = bool(re.search(r"\b(?:repair\w*|structural|plumbing|wiring|maintenance(?! fee))\b", sentence))
+        termination = bool(re.search(r"\bterminat\w*\b|\bend (?:the |this )?(?:tenancy|agreement)\b", sentence))
+        # A refund at expiry/termination describes deposit settlement, not an exit right.
+        if deposit and re.search(r"\brefund\w*\b", sentence) and not re.search(
+            r"\b(?:may|can|shall|will)\s+(?:also\s+)?(?:end|terminate)\b|\bterminates? early\b", sentence
+        ):
+            termination = False
+        if deposit:
+            topics.add("security_deposit")
+        if repair and (not deposit or re.search(r"\bresponsib\w*\b|\bmaintain\w*\b|\b(?:cap|limit)\b", sentence)):
+            topics.add("minor_repair")
+        service_method = re.search(r"\b(?:notice|notices)\b[^.;]*\b(?:served|deliver\w*|post\w*|emoji|email|whatsapp)\b", sentence)
+        procedural_notice = not deposit and not repair and re.search(r"\b(?:notice|breach|emoji)\b", sentence)
+        if termination or service_method or (procedural_notice and process_context not in {"security_deposit", "minor_repair"}):
+            topics.add("termination_notice")
+        if re.search(r"\b(?:occup\w*|resid\w*|sublet\w*|sub-?tenant\w*|assign\w*|guest\w*|anyone|people|immigration|foreign)\b", sentence):
+            # Owner occupation mentioned as an exit ground is still a termination issue.
+            if not termination or re.search(r"\b(?:tenant|sublet\w*|immigration|foreign)\b", sentence):
+                topics.add("occupancy_subletting")
+        incidental_payment = deposit and not re.search(
+            r"\bfirst month\S* rent\b|\brent continues\b|\b(?:additional|increased|higher|extra) (?:monthly )?rent\b|"
+            r"\b(?:rent|utilities|utility charges)\s+(?:shall |must |is )?(?:be )?(?:paid|payable|due)\b", sentence
+        )
+        if not incidental_payment:
+            if re.search(r"\b(?:utilit\w*|water|electric\w*|gas|sewer\w*)\b", sentence) and not repair:
+                topics.add("utilities")
+            if re.search(r"\b(?:rent|late|fees?)\b", sentence) or (not topics and "charge" in sentence):
+                topics.add("rent")
+        if termination:
+            process_context = "termination_notice"
+        elif deposit:
+            process_context = "security_deposit"
+        elif repair:
+            process_context = "minor_repair"
     return topics
 
 
@@ -74,7 +103,7 @@ class LocalBM25Retriever:
             return cls(json.loads(line) for line in file if line.strip())
 
     def search(self, query: str, housing_type: str, limit: int = 4) -> list[RetrievedChunk]:
-        if housing_type not in {"HDB", "Private Residential"}:
+        if housing_type not in {"HDB", "Private Residential"} or limit < 1:
             return []
 
         query_terms = tokenize(query)
@@ -86,6 +115,8 @@ class LocalBM25Retriever:
         candidates: list[RetrievedChunk] = []
         for index, chunk in enumerate(self.chunks):
             if chunk["housing_type"] != housing_type or chunk["source_kind"] != "tenancy_agreement_template":
+                continue
+            if desired_topics and not desired_topics.intersection(chunk.get("topics", [])):
                 continue
 
             frequencies = self.term_frequencies[index]
@@ -118,6 +149,13 @@ class LocalBM25Retriever:
                 score += 2.0
             if re.search(r"\b(end|terminate|termination)\b", query_lowered) and "right to terminate" in lowered:
                 score += 2.0
+            if "termination_notice" in desired_topics and "right to terminate" in lowered:
+                score += 4.0
+                if "terminated by the landlord in writing" in lowered and not re.search(r"\b(?:destroy\w*|damage\w*)\b", query_lowered):
+                    score += 8.0
+            if re.search(r"\b(?:sublet\w*|assign\w*)\b", query_lowered) and "sublet" in lowered:
+                # Prefer the parent covenant with its 'will not' over a bare d) fragment.
+                score += 8.0 if re.search(r"\btenant\b.{0,35}\bwill not\b", lowered) else 3.0
 
             if score > 0:
                 candidates.append(
@@ -136,12 +174,15 @@ class LocalBM25Retriever:
                 )
 
         ranked = sorted(candidates, key=lambda item: (-item.score, item.source_id, item.page_number))
-        if len(desired_topics) < 2:
-            return ranked[:limit]
         selected: list[RetrievedChunk] = []
         for topic in sorted(desired_topics):
             match = next((item for item in ranked if topic in item.topics and item not in selected), None)
             if match is not None:
                 selected.append(match)
-        selected.extend(item for item in ranked if item not in selected)
+        for item in ranked:
+            if item in selected:
+                continue
+            if any(item.text in chosen.text[:2200] for chosen in selected):
+                continue
+            selected.append(item)
         return selected[:limit]
