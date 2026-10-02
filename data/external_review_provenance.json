@@ -1,0 +1,11 @@
+{
+  "reported_at": "2026-10-03",
+  "reporter": "project user",
+  "user_statement": "The review results agree with the assistant-authored labels.",
+  "scope_of_attestation": "Agreement on the 20 labels as reported by the user; no independently annotated file or per-case adjudication notes were supplied.",
+  "reviewer_identity": "not provided",
+  "review_method": "not provided",
+  "rationale_and_expected_section_status": "Copied from assistant-authored v0; not separately attested by the user.",
+  "risk_rubric_caveat": "EXT_01, EXT_07, EXT_11, EXT_12 and EXT_16 were flagged in the preflight as needing particular care under the v12 actionable tenant-adverse criterion; their v0 labels were nevertheless retained per the user's reported review agreement.",
+  "model_predictions_seen_when_locked": false
+}

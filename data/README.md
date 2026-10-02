@@ -4,7 +4,7 @@
 
 `external_cases_raw.csv` is the verbatim set of 20 externally authored cases received on 28 September 2026. Treat it as immutable input.
 
-An assistant-authored `external_cases_ground_truth.csv` was committed as a provisional v0 proposal before any external model run. It was disputed after the product goal was clarified and is **not** independently reviewed ground truth. Before the final evaluation, an independent reviewer must create and lock `external_cases_ground_truth.reviewed.csv` with one label and expected reference for each case, following `labeling_guide.md`. Do not use external predictions to tune prompts, retrieval settings, rules or thresholds.
+An assistant-authored `external_cases_ground_truth.csv` was committed as a provisional v0 proposal before any external model run. It was disputed after the product goal was clarified and is **not** independently reviewed ground truth. On 3 October the user reported that human review agreed with all v0 labels. `external_cases_ground_truth.reviewed.csv` locks those reported labels before model prediction, while `external_review_provenance.json` records that no independently annotated file or per-case rationale was supplied. Do not overstate this as independently auditable adjudication, and do not use external predictions to tune prompts, retrieval settings, rules or thresholds.
 
 ## Important quality note
 

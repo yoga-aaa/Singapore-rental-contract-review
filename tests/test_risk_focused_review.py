@@ -104,7 +104,7 @@ class RiskFocusedReviewTests(unittest.TestCase):
                  patch.object(run_external_evaluation, "REVIEWED_TRUTH", base / "missing_reviewed.csv"), \
                  patch.object(run_external_evaluation, "OUTPUT", base / "predictions.csv"), \
                  patch.object(run_external_evaluation, "local_api_key") as key:
-                with self.assertRaisesRegex(RuntimeError, "Independent-reviewed external labels"):
+                with self.assertRaisesRegex(RuntimeError, "User-confirmed external labels"):
                     run_external_evaluation.main()
                 key.assert_not_called()
                 self.assertFalse((base / "predictions.csv").exists())

@@ -50,7 +50,7 @@ def read_holdout() -> list[dict[str, str]]:
 def main() -> None:
     cases = read_holdout()
     if not REVIEWED_TRUTH.exists():
-        raise RuntimeError("Independent-reviewed external labels must be locked before prediction.")
+        raise RuntimeError("User-confirmed external labels must be locked before prediction.")
     if OUTPUT.exists():
         raise FileExistsError(f"The locked external predictions already exist: {OUTPUT}")
     api_key = local_api_key()
