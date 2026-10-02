@@ -21,7 +21,7 @@ python -m unittest discover -s tests -q
 python scripts/score_development_citation_audit.py --predictions results/development_rag_predictions_v10.csv --index data/derived/source_sections.jsonl --audit data/development_citation_audit_v10.json
 ```
 
-The last command checks the SHA-256 of both the checked-in synthetic prediction CSV and the locally rebuilt PDF index before scoring. A changed upstream PDF or changed `pypdf` extraction should fail the hash check; do not silently reuse the old audit. To make a *new* paid evaluation, create an ignored local `.env` with `OPENROUTER_API_KEY=...` and run `python scripts/run_rag_evaluation.py --output results/<new-name>.csv`. The runner refuses to overwrite an existing output and stops at 60 model calls or 100,000 tokens by default. Only `development_cases.csv` is allowed by this runner. Do not use it for external cases or real contracts.
+The last command checks the SHA-256 of both the checked-in synthetic prediction CSV and the locally rebuilt PDF index before scoring, after normalizing CRLF/CR line endings to LF for portable Git checkouts. The v10 audit hashes were migrated for this normalization only; its verdicts did not change. A changed upstream PDF or changed `pypdf` extraction should still fail the hash check; do not silently reuse the old audit. To make a *new* paid evaluation, create an ignored local `.env` with `OPENROUTER_API_KEY=...` and run `python scripts/run_rag_evaluation.py --output results/<new-name>.csv`. The runner refuses to overwrite an existing output and stops at 60 model calls or 100,000 tokens by default. Only `development_cases.csv` is allowed by this runner. Do not use it for external cases or real contracts.
 
 ## Iteration self-checks
 

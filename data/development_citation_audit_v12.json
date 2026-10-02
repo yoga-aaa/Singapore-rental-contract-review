@@ -1,8 +1,9 @@
 {
   "audit_version": 3,
   "auditor": "Internal first-pass review by project agent; independent confirmation pending",
-  "predictions_sha256": "8eaa0c47db98d76b82faedd4c568d3e26757bc67250fafe4f51999d2ab917dc4",
-  "index_sha256": "caf61131e2cdc05c9390b3ed7661c2e4316c7d4a7eca641a47ed8d24c87f20f1",
+  "predictions_sha256": "5e32eb2cdd1ec937cec3f3e56d87443368ec141025619d91e386bc9065618c19",
+  "index_sha256": "144d3e32bd50512938d0a1de67ce4c0f348078f2206f038826039143504de9ea",
+  "hash_normalization": "Normalize CRLF and CR to LF before SHA-256.",
   "visible_characters_per_chunk": 2200,
   "rubric": "Supported means every material reference-side claim in the reason follows from cited model-visible CEA text and the citation substantively supports the comparison. Changed reasons and evidence were reviewed afresh; unchanged v10 assessments were checked for identical predictions and source hashes. Source silence and isolated-clause omissions do not prove risk. Uncertain counts as not supported. This is not independent human confirmation or external validation.",
   "assessments": [

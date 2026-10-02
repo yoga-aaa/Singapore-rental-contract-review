@@ -8,6 +8,16 @@ from src.citation_audit import score_citation_audit, sha256
 
 
 class CitationAuditTests(unittest.TestCase):
+    def test_hash_is_portable_across_line_endings_but_detects_content_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "sample.csv"
+            target.write_bytes(b"case_id,label\r\nA,review_required\r\n")
+            windows_hash = sha256(target)
+            target.write_bytes(b"case_id,label\nA,review_required\n")
+            self.assertEqual(sha256(target), windows_hash)
+            target.write_bytes(b"case_id,label\nA,insufficient_evidence\n")
+            self.assertNotEqual(sha256(target), windows_hash)
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)

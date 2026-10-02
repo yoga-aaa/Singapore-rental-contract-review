@@ -13,7 +13,9 @@ VERDICTS = {"supported", "unsupported", "uncertain"}
 
 
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """Hash text content independently of Windows/Unix line-ending conversion."""
+    canonical = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(canonical).hexdigest()
 
 
 def score_citation_audit(predictions_path: Path, index_path: Path, audit_path: Path) -> dict[str, float | int]:

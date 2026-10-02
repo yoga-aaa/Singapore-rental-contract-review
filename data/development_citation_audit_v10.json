@@ -1,8 +1,9 @@
 {
   "audit_version": 2,
   "auditor": "Internal first-pass review by project agent; independent confirmation pending",
-  "predictions_sha256": "c9d9846bbd0eed78d77e943db015a0f6f483dc0a053c555e9a06aeb19eb799a0",
-  "index_sha256": "caf61131e2cdc05c9390b3ed7661c2e4316c7d4a7eca641a47ed8d24c87f20f1",
+  "predictions_sha256": "2daf5d93584b1c6df0ca20f87bd1934c9cb7f6c7ee17905b6d6e27127d4c7e5e",
+  "index_sha256": "144d3e32bd50512938d0a1de67ce4c0f348078f2206f038826039143504de9ea",
+  "hash_normalization": "Normalize CRLF and CR to LF before SHA-256; verdicts unchanged from v10.",
   "visible_characters_per_chunk": 2200,
   "rubric": "Supported means every material reference-side claim in the reason follows directly from the cited, model-visible CEA excerpt(s), and the cited terms provide a substantive basis for the comparison. A correct locator or a quote alone is not enough. A blank schedule field is variable; silence does not establish a prohibition. Uncertain is counted as not supported. This audit is separate from ground-truth label accuracy.",
   "assessments": [
