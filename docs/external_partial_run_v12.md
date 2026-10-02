@@ -1,5 +1,7 @@
 # External v12 evaluation: budget-stopped partial run
 
+**Historical checkpoint, now superseded.** The user authorized a capped two-case continuation; the complete 20-case score and citation audit are in [external_evaluation_v12.md](external_evaluation_v12.md). The account below describes the state *at the partial-run stop*, not the current project status.
+
 On 2026-10-03 the user replied "授权" to a request explicitly covering the 20 sanitized externally authored synthetic/no-personal-data cases, OpenRouter transmission and a small API-credit spend. The user had already reported that human review agreed with the assistant's 20 provisional labels. `data/external_review_provenance.json` records the limits of that attestation: the reviewer identity, method and per-case notes were not supplied, and the old rationales/source sections were not separately confirmed.
 
 The labels were copied unchanged (except the lock date) into `data/external_cases_ground_truth.reviewed.csv` and committed **before prediction** at `43c9161343f724e71e9f0ca36a350c9525f901fa`. Structural checks found 20 matching IDs/housing types and valid indexed source/section pairs. The pre-run sanitized input SHA-256 was `446b3084fbe59157bb137a7e574ecdd3a9af358d7a29ea418ae71350d56e0020`; the reviewed-label CSV raw SHA-256 was `1ecdae6bb643223439f871bbedda6f4a858e7a0e17ff00b98551db4b4103a8e7`. The local source index raw SHA-256 was `caf61131e2cdc05c9390b3ed7661c2e4316c7d4a7eca641a47ed8d24c87f20f1`.

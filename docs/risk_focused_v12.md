@@ -1,5 +1,7 @@
 # Risk-focused development check (v12)
 
+**Historical development result.** The later [20-case external evaluation](external_evaluation_v12.md) did not reproduce its 95.83% internal citation score. The pending-external section below describes the state when this development note was written.
+
 The product should surface a concrete, potentially tenant-adverse issue that a renter can ask about, not flag every wording difference from a recommended CEA template. The technical three-label interface is unchanged. `no_material_difference_found` is a legacy token whose operational meaning is **no actionable tenant-adverse difference found in the covered issues**; it never means the agreement is approved or that the text is identical.
 
 ## Changes and self-checks
