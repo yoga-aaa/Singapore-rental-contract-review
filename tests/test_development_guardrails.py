@@ -67,6 +67,8 @@ class DevelopmentGuardrailTests(unittest.TestCase):
                 writer.writerow({"source_id": "CEA"})
             summary = evaluate(truth, predictions, registry)
         self.assertEqual(summary["unsafe_non_abstention_rate"], 1.0)
+        self.assertIsNone(summary["citation_validity"])
+        self.assertEqual(summary["citation_locator_validity"], 1.0)
         self.assertEqual(summary["unsafe_non_abstention_count"], 1)
         self.assertEqual(summary["insufficient_evidence_count"], 1)
 

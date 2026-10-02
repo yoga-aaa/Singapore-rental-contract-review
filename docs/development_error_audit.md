@@ -1,5 +1,7 @@
 # Development-set error audit (2026-09-30)
 
+Historical first-pass report. The later [substantive citation audit](citation_audit_followup.md) supersedes its pending-citation-work note.
+
 This audit concerns only the 30 synthetic development cases. The 20 independently authored external cases were not opened, sent to the model, or used for tuning. The original development labels in `data/development_cases.csv` remain unchanged. Generated prediction CSVs are local, ignored artifacts under `results/`.
 
 ## Comparison on the unchanged labels

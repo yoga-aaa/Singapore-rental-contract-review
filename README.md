@@ -14,7 +14,7 @@ Every non-abstaining result must cite a retrieved source passage. The system is 
 
 ## Repository status
 
-Project foundation and the first 30-case development evaluation are complete. See [the development error audit](docs/development_error_audit.md) for the corrected metrics and open citation/label questions. The external cases supplied by an independent author are preserved in `data/external_cases_raw.csv` and must not be used for prompt tuning or rule changes.
+Project foundation and the first 30-case development evaluation are complete. See [the development error audit](docs/development_error_audit.md) and [citation audit follow-up](docs/citation_audit_followup.md) for corrected metrics, evidence-level citation findings and open label questions. The external cases supplied by an independent author are preserved in `data/external_cases_raw.csv` and must not be used for prompt tuning or rule changes.
 
 ## Planned structure
 
