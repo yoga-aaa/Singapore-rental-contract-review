@@ -4,7 +4,9 @@ An individual PE6201 prototype that compares selected English clauses from Singa
 
 ## Current result
 
-The [v13 local improvements](docs/offline_improvements_v13.md) add exact contract-to-reference comparisons, per-comparison verification, reference context, multi-topic retrieval and stricter inference checks. All 91 local tests pass; this iteration used **zero API calls/tokens**. Real-model performance for v13 is still untested. Saved v12 external failures are now regression material, so a fresh holdout is needed for a new generalization estimate.
+The [v13 local improvements](docs/offline_improvements_v13.md) were followed by an [actual development check and v13.1 postprocessing repair](docs/development_check_v13.md). The original paid run used 10 model calls / 21,586 tokens and scored 8/8 risk precision, 8/12 recall, 0/5 unsafe non-abstentions and 19/19 internally supported citations. Four correctly identified risks were rejected because the verifier paraphrased the explanation. After a local repair, **recorded-response replay, not a fresh live model run**, scored 12/12 precision, 12/12 recall, 0/5 unsafe non-abstentions and **22/23 (95.65%) internally supported citations**, with one uncertain wording claim counted as not supported. Seven of 30 cases abstain. All 109 local tests pass. This repeatedly tuned development/replay result is not an independent external result or a guarantee of reliability.
+
+The v13.1 repair retains exact contract spans, evidence checks and per-comparison verification; it revalidates paraphrased approval prose rather than requiring identical strings. The notice-validity wording in DEV_15 still needs correction, and DEV_29's actor mismatch remains an abstention. Saved v12 external failures are now regression material, so a fresh independently labelled holdout is needed for a new generalization estimate.
 
 The local development set has 30 synthetic cases. On the locked v10 run, review-required precision and recall are both 12/12, unsafe non-abstention is 0/5, and **substantively supported citation is 23/24 (95.83%) on an internal first pass**, counting one uncertain citation as not supported. This is a repeatedly tuned development result, not external validation. Read the [v10 evidence and citation report](docs/retrieval_and_citation_v10.md) for the full denominator, SHA-256-locked audit, costs, limits and reproduction commands. Earlier [error](docs/development_error_audit.md) and [citation](docs/citation_audit_followup.md) audits remain for comparison.
 
@@ -17,6 +19,8 @@ Install `requirements.txt`, download the registered CEA PDFs with `python script
 For a new live review, keep `OPENROUTER_API_KEY=...` in the ignored repository-root `.env`; never commit it. The live path uses clause-level retrieval, exact numbered evidence spans, a structured draft, a second evidence check, and safe abstention. The development runner caps calls and tokens and refuses to overwrite existing results.
 
 For local checking without credits, run `python scripts/check_v13_offline.py` or add `--offline` to `scripts/review_clause_live.py`. A clause requiring the model is reported as `model_needed`, not as a completed prediction. New development runs save grounded comparisons as well as reasons and reference evidence.
+
+Run `python scripts/score_v13_development_check.py` to recompute the separately locked original and replay results without API calls. Their citation audits are `data/development_citation_audit_v13.json` and `data/development_citation_audit_v13_1_replay.json`. The one-time live/replay harnesses refuse to overwrite saved artifacts; scoring does not repeat a paid run. Raw model responses are saved for the approved synthetic cases only, without an API key.
 
 ## Safety and scope
 

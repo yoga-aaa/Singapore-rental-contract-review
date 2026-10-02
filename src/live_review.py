@@ -316,11 +316,8 @@ def apply_verification(
         return abstain("The independent evidence check returned an invalid response.", usage, api_called=True)
     if any(not isinstance(verification[field], str) for field in ("decision", "label", "reason", "issue")):
         return abstain("The independent evidence check returned invalid field types.", usage, api_called=True)
-    if structured and (not isinstance(verification["follow_up_question"], str)
-                       or (verification["decision"] == "approve" and (
-                           verification["reason"] != raw["reason"]
-                           or verification["follow_up_question"] != raw["follow_up_question"]))):
-        return abstain("The independent approval changed the explanation or question without revision.", usage, api_called=True)
+    if structured and not isinstance(verification["follow_up_question"], str):
+        return abstain("The independent evidence check returned an invalid question.", usage, api_called=True)
     if structured:
         comparisons = raw.get("comparisons")
         verdicts = verification.get("comparison_verdicts")
@@ -345,8 +342,13 @@ def apply_verification(
         raw = {**raw, "comparisons": reviewed}
     decision = verification["decision"]
     if decision == "approve" and verification["label"] == raw["label"]:
-        candidate = validate_output(raw, chunks, usage, clause_text, require_grounding=require_grounding)
-        return candidate
+        # Approval can paraphrase the explanation. Do not assume equivalent
+        # wording: validate the returned prose again against the same immutable
+        # contract spans, evidence, relations and per-comparison assessments.
+        approved = {**raw, "reason": verification["reason"]}
+        if structured:
+            approved["follow_up_question"] = verification["follow_up_question"]
+        return validate_output(approved, chunks, usage, clause_text, require_grounding=require_grounding)
     if decision == "revise" and verification["label"] in LABELS and isinstance(verification["reason"], str):
         if verification["label"] == "insufficient_evidence":
             return abstain("The independent evidence check found the draft citation insufficient.", usage, api_called=True)

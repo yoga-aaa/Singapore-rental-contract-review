@@ -1,0 +1,29 @@
+{
+  "pipeline_freeze_commit": "599bfb51ac5120d1315067576d548c149a6fd00b",
+  "started_at_utc": "2026-10-02T18:58:57.185182+00:00",
+  "harness_sha256": "ba30e2a4e0abdcec577d49774ca31dd44b135a6ea8e36e86a866c2ff696aff48",
+  "cases_sha256": "9198e902133e75204a2778a0f0ecbea39ae317b41d613e3883f3c41055bf9611",
+  "index_sha256": "144d3e32bd50512938d0a1de67ce4c0f348078f2206f038826039143504de9ea",
+  "source_hashes": {
+    "src/__init__.py": "07641072c15901fd0b55da89967f93a733f9a737b41bce24f8397bcd9d2944d3",
+    "src/baseline_rules.py": "535d31413adf9f0935e4b6fd0b609eefa364b51857af37dcf7b71784f50a8191",
+    "src/citation_audit.py": "cb1fca7cf17a1f8d9e3abf31dc906187e749592126ce406829a30915fc38f7d9",
+    "src/comparison_checks.py": "adbf7dcd79cb2a3d22130fa492d49461b10045a88cb39d85385db208eeade0d6",
+    "src/direct_common.py": "6079610ff19fcd860f6659da01e23161aa82dcf6ee5445c058725adaecc4c91d",
+    "src/direct_differences.py": "5d22732a6d80d9aa7a56ed55e0c3824faa6fd50c7d9514e304647b4ed1dbd4ac",
+    "src/direct_matches.py": "e3ca7b11f69a1787e09e464ac850870dd69646b79c3d249a1c19d7a908274032",
+    "src/direct_remaining.py": "ca2cc2bcbc92a5d2b0be9a72c7333e73bc53d88a2c7728ef469ccda41ed91baf",
+    "src/evaluate.py": "3e88c98260818e773007c0286e52ef862b5fe9e6880a347426464576fcc92c73",
+    "src/evidence_spans.py": "92d5b5c9117816e270e533e00e6f552875df795bb94b9a1c3378642fa06804a2",
+    "src/evidence_verifier.py": "21088a87d3ef0f0a33b146ee9626732e7474462d3ba6407c160f520e41733708",
+    "src/grounding.py": "b7c208bd0bab94322b3d3610d0cbee157e9eb4571f6ed17aa7bfc2f9f06c09f1",
+    "src/live_review.py": "4ba5770f7dd1d9c0737f163ed5c043406e5d85c9a7723e5bbe0937f45b67eb57",
+    "src/rag_review.py": "99511b42fa2bfe52757077c66571bba8c3cb58defa7289a7765fa6b0e3e0adf1",
+    "src/retrieval.py": "43154e16d3f5b0a33bfcedd451798f59fcd55591f7c85bcf19d966048c981bd6",
+    "src/schedule_sections.py": "ec0640b0d6633d9b236e8b6c9c8ae393b0098c86ffd72e6edf1cdaec8edfeffb",
+    "src/source_sections.py": "fb547769618e03aed460b448e21149f1a9116fd4ad4d78b0f378bbf451c5ee07"
+  },
+  "max_model_calls": 10,
+  "max_total_tokens": 40000,
+  "reservation": "UTF-8 JSON request bytes + max completion tokens + 1024 framing reserve."
+}

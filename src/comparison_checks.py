@@ -13,6 +13,33 @@ def sentences(text: str) -> list[str]:
     return re.split(r"(?<=[.!?;])\s+", text.casefold())
 
 
+def explicit_waiver(protection: str, clause_text: str) -> bool:
+    """Recognize scoped negative terms, not absence of a safeguard in an excerpt."""
+    aliases = {"notice": r"(?:notice|notify|notifying|notification)",
+               "cure": r"(?:cure|remedy|opportunity)",
+               "remedy": r"(?:cure|remedy|opportunity)",
+               "cap": r"(?:cap|limit)", "limit": r"(?:cap|limit)"}.get(protection, protection)
+    qualifiers = r"(?:first|giving|give|providing|provide|obtaining|obtain|any|prior|written|the|a|an|tenant|landlord|to)"
+    for part in sentences(clause_text):
+        if re.search(
+            rf"\b(?:without\s+(?:{qualifiers}\s+){{0,8}}{aliases}\b|"
+            rf"no\s+(?:(?:prior|written|opportunity to)\s+){{0,2}}{aliases}\b|"
+            rf"(?:need not|not required to)\s+(?:{qualifiers}\s+){{0,8}}{aliases}\b|"
+            rf"{aliases}\s+(?:is|shall be)\s+not required\b)", part
+        ):
+            return True
+        # A negative process declaration can cover a list (notice or remedy).
+        # Stop at a comma/contrast, so an affirmative following requirement is
+        # not mistakenly treated as part of the negative declaration.
+        for process in re.finditer(
+            r"\bno\s+(?:process|procedure|requirement|provision)\s+for\s+([^.;,]+)", part
+        ):
+            scope = re.split(r"\b(?:but|however|whereas|although)\b", process.group(1))[0]
+            if re.search(rf"\b{aliases}\b", scope):
+                return True
+    return False
+
+
 def omission_issue(reason: str, clause_text: str) -> bool:
     omission = re.compile(
         r"\b(?:omits?|omitted|missing|lacks?|unspecified|not specified|not stated|"
@@ -29,15 +56,7 @@ def omission_issue(reason: str, clause_text: str) -> bool:
         if not protections:
             return True
         for protection in protections:
-            aliases = {"cure": r"(?:cure|remedy|opportunity)", "remedy": r"(?:cure|remedy|opportunity)",
-                       "cap": r"(?:cap|limit)", "limit": r"(?:cap|limit)"}.get(protection, protection)
-            explicit = any(re.search(
-                rf"\b(?:without\s+(?:(?:giving|providing|obtaining|any|prior|written)\s+){{0,3}}{aliases}\b|"
-                rf"no\s+(?:(?:prior|written|opportunity to)\s+){{0,2}}{aliases}\b|"
-                rf"(?:need not|not required to)\s+(?:(?:give|provide|obtain)\s+)?(?:written\s+)?{aliases}\b|"
-                rf"{aliases}\s+(?:is|shall be)\s+not required\b)", part
-            ) for part in sentences(clause_text))
-            if not explicit:
+            if not explicit_waiver(protection, clause_text):
                 return True
     return False
 
