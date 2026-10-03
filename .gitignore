@@ -5,6 +5,8 @@ submission/
 tmp/
 artifacts/
 .venv/
+.venv-web/
+.vercel/
 __pycache__/
 *.py[cod]
 .pytest_cache/

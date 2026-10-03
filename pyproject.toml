@@ -4,9 +4,18 @@ version = "0.17.0"
 description = "PE6201 tenancy-agreement reference comparison prototype"
 requires-python = ">=3.11"
 dependencies = [
+  "fastapi==0.142.2",
   "pypdf==6.10.0",
-  "streamlit==1.65.0",
 ]
+
+[project.optional-dependencies]
+desktop = ["streamlit==1.65.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.vercel]
+entrypoint = "webapp:app"
+
+[tool.vercel.scripts]
+build = "python scripts/build_vercel.py"

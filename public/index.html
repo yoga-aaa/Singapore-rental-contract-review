@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Synthetic Singapore tenancy-clause review demonstration. Offline rules, traceable references, no model API calls.">
+  <title>Singapore Rental Contract Review</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/"><span class="brand-mark">SR</span><span>Rental Contract Review<small>Singapore · PE6201</small></span></a>
+    <span class="pill">OFFLINE DEMONSTRATION</span>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">UNDERSTAND BEFORE YOU SIGN</p>
+      <h1>A closer look at<br>your rental clauses.</h1>
+      <p class="lede">Compare selected English tenancy clauses with housing-specific CEA references. Clarify supported potential risks; do not mistake a limited comparison for approval of a whole contract.</p>
+      <div class="notice"><strong>Research prototype, not legal advice.</strong> Only synthetic, non-personal data. Quality targets remain unmet. This public version runs local rules, not an AI model, and cannot spend model credits.</div>
+    </section>
+    <section class="workspace" aria-label="Contract review">
+      <aside class="settings card">
+        <p class="eyebrow">01 · SET THE SCOPE</p><h2>Review settings</h2>
+        <label for="housing">Housing type</label>
+        <select id="housing"><option>HDB</option><option>Private Residential</option></select>
+        <label for="version">Evidence version</label>
+        <select id="version"><option value="v17">v17 · CEA comparison</option><option value="v18">v18 · Expanded official sources</option></select>
+        <p id="version-note" class="muted">Historical local rules. This is not a new model evaluation.</p>
+        <div class="status-line"><span class="dot"></span><span id="health">Checking pinned references…</span></div>
+        <div class="mini-stats"><div><b>0</b><span>Model API calls</span></div><div><b>$0</b><span>Model cost</span></div></div>
+        <p class="muted">“model_needed” means the offline rules could not settle the clause. No model has run; no completed prediction is claimed.</p>
+        <button id="clear" class="secondary wide" type="button">Clear page data</button>
+      </aside>
+      <section class="input card">
+        <p class="eyebrow">02 · PROVIDE SYNTHETIC TEXT</p><h2>What would you like to compare?</h2>
+        <div class="tabs" role="group" aria-label="Input method">
+          <button type="button" class="tab selected" data-method="example" aria-pressed="true">Try an example</button>
+          <button type="button" class="tab" data-method="paste" aria-pressed="false">Paste a clause</button>
+          <button type="button" class="tab" data-method="pdf" aria-pressed="false">Text PDF</button>
+        </div>
+        <div id="example-pane">
+          <label for="example">Built-in synthetic example</label><select id="example"></select>
+          <p id="example-purpose" class="muted"></p><div id="example-text" class="clause-text"></div>
+          <a id="demo-pdf" class="text-link" href="/api/demo-pdf/1" download>Download this synthetic PDF</a>
+        </div>
+        <div id="paste-pane" hidden>
+          <label for="clause">English contract clause</label>
+          <textarea id="clause" maxlength="6000" rows="8" placeholder="Use synthetic text. Include all conditions and exceptions. Never paste a real contract."></textarea>
+          <p class="muted">Maximum 6,000 characters. A paraphrase can pass when the same obligations are supported by evidence.</p>
+        </div>
+        <div id="pdf-pane" hidden>
+          <label for="pdf">Synthetic readable text PDF</label><input id="pdf" type="file" accept="application/pdf,.pdf">
+          <p class="muted">Up to 2 MB / 20 pages. Scans and encrypted PDFs are not supported. Confirm synthetic data below before sending the file.</p>
+          <button id="extract" type="button" class="secondary">Extract and preview fragments</button><div id="fragments"></div>
+        </div>
+        <div class="confirmations">
+          <label class="check"><input id="synthetic" type="checkbox"><span>All input is synthetic and contains no names, addresses, identity numbers or other personal data.</span></label>
+          <label class="check"><input id="checked" type="checkbox"><span>I checked the selected text, including every condition and exception, against the input.</span></label>
+        </div>
+        <p class="privacy">Pasted text and PDFs are sent to the hosting server, not a model API. The application does not save them to disk; hosting infrastructure may retain operational logs. Personal-data detection is incomplete.</p>
+        <div class="action-row"><button id="review" type="button" class="primary" disabled>Review selected clauses <span aria-hidden="true">→</span></button><span id="progress" class="muted" role="status"></span></div>
+        <div id="error" class="error" role="alert" hidden></div>
+      </section>
+    </section>
+    <section id="report-section" class="card report" hidden aria-label="Review report">
+      <div class="section-top"><div><p class="eyebrow">03 · INSPECT THE EVIDENCE</p><h2>Review report</h2></div><button id="download" type="button" class="secondary">Download JSON</button></div>
+      <p id="report-meta" class="muted"></p><p id="report-note" class="notice" hidden></p>
+      <div id="report-stats" class="report-stats"></div><div id="results"></div>
+    </section>
+    <section class="support-grid">
+      <details class="card"><summary>Reference sources & scope</summary><p class="muted">CEA templates are comparison references, not mandatory legal standards. Official guidance applies only to its stated topic and conditions. Retrieval is not proof that a source supports a conclusion.</p><div id="sources"></div></details>
+      <details class="card"><summary>Recorded results & limitations</summary>
+        <p class="muted">v17 paid regression on 20 already-exposed, AI-authored and separately AI-reviewed cases. Not expert gold or an independent generalization estimate.</p>
+        <table><thead><tr><th>Measure</th><th>Historical v17</th></tr></thead><tbody>
+          <tr><td>Risk precision</td><td>5/5 · 100%</td></tr><tr><td>Risk recall</td><td>5/14 · 35.71%</td></tr>
+          <tr><td>Unsafe non-abstention (lower is better)</td><td>0/4 · 0%</td></tr><tr><td>Citation locator validity</td><td>6/6 · 100%</td></tr>
+          <tr><td>Substantive citation support, assistant first pass</td><td>2/6 · 33.33%</td></tr>
+        </tbody></table>
+        <p class="muted">14/20 abstained. Citation audit awaits owner confirmation. Historical v17 cost: US$0.2722430. v18 has not been measured. Finding more sources or passing engineering tests does not prove improved recall or citation support.</p>
+      </details>
+    </section>
+    <footer>Selected clauses only · HDB & private residential · English · No paid model calls in this public demonstration</footer>
+  </main>
+</body>
+</html>
