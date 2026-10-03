@@ -19,6 +19,7 @@ from src.frozen_external import MeteredTransport, byte_hash, require, safe_membe
 from src.frozen_v18 import build_freeze, verify_freeze
 from src.live_review import local_api_key
 from src.review_v18 import review_clause
+from src.campaign_budget import verify_campaign
 
 
 def main(version='v18'):
@@ -27,6 +28,7 @@ def main(version='v18'):
     parser.add_argument('--freeze-from', type=Path)
     parser.add_argument('--live', action='store_true')
     parser.add_argument('--authorization', type=Path)
+    parser.add_argument('--campaign', type=Path)
     args = parser.parse_args()
     require(not (args.freeze_from and args.live), 'Freeze and paid execution must be separate commands')
     bundle = args.bundle.resolve()
@@ -42,15 +44,19 @@ def main(version='v18'):
         return
     verify_authorization(args.authorization, checked['manifest_sha256'], checked['config'])
     require(args.authorization.resolve().is_relative_to(bundle.parent), 'Approval must remain private')
+    campaign=verify_campaign(args.campaign,REPO,checked['config']['max_cost_usd']) if version=='v20' else None
     out = safe_member(bundle.parent, 'run_'+version)
     require(not out.exists(), 'Never overwrite, automatically resume or repeat this run')
     key = local_api_key()
     require(bool(key), 'Ignored local API credential required')
     retriever_class,reviewer=PacketRetriever,review_clause
-    if version=='v19':
+    if version in {'v19','v20'}:
         from src.evidence_packet_v19 import CoverageRetriever
-        from src.review_v19 import review_clause as v19_review
-        retriever_class,reviewer=CoverageRetriever,v19_review
+        if version=='v20':
+            from src.review_v20 import review_clause as version_review
+        else:
+            from src.review_v19 import review_clause as version_review
+        retriever_class,reviewer=CoverageRetriever,version_review
     retriever = retriever_class.from_repo(safe_member(bundle, checked['manifest']['snapshot_repo_path']))
     out.mkdir()
     started = {'started_at_utc':datetime.now(timezone.utc).isoformat(),
@@ -59,6 +65,7 @@ def main(version='v18'):
                'authorization_sha256':byte_hash(args.authorization),
                'evaluation_type':checked['manifest']['evaluation_type'],
                'budget':{k:checked['config'][k] for k in ('max_model_calls','max_total_tokens','max_cost_usd')}}
+    if campaign: started['campaign_budget']=campaign
     with (out/'run_started.json').open('x', encoding='utf-8') as file:
         json.dump(started, file, indent=2)
     completed, status, failure = [], 'complete', None
@@ -68,6 +75,8 @@ def main(version='v18'):
         with patch('src.review_'+version+'._request_openrouter', meter):
             try:
                 for case in checked['cases']:
+                    if campaign:
+                        require(byte_hash(args.campaign)==campaign['campaign_sha256'],'Campaign budget changed during the run')
                     require(byte_hash(bundle/'manifest.json') == checked['manifest_sha256'], 'Manifest changed')
                     verify_freeze(bundle, REPO)
                     meter.case_id = case['case_id']

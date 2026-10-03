@@ -20,7 +20,8 @@ RUNNER = 'scripts/run_v18_regression.py'
 
 
 def runtime_files(repo: Path, version='v18') -> list[Path]:
-    extra=[repo/'scripts/run_v19_regression.py'] if version=='v19' else []
+    extra=[repo/f'scripts/run_{version}_regression.py'] if version!='v18' else []
+    if version=='v20': extra.append(repo/'scripts/score_v18_regression.py')
     return sorted([*(repo/'src').glob('*.py'), repo/RUNNER, repo/'requirements.txt', *extra])
 
 
@@ -41,7 +42,7 @@ def build_freeze(repo: Path, original: Path, destination: Path, version='v18') -
     repo, original, destination = repo.resolve(), original.resolve(), destination.resolve()
     require(not destination.is_relative_to(repo), 'Keep the regression outside the public repository')
     require(not destination.exists(), 'Never overwrite a frozen batch')
-    require(version in {'v18','v19'}, 'Unsupported expanded-source version')
+    require(version in {'v18','v19','v20'}, 'Unsupported expanded-source version')
     old = read_json(original/'manifest.json')
     require(old['freeze_version'] == 'v17' and old['case_count'] == 20, 'Expected original v17 freeze')
     for entry in old['artifacts']:
@@ -54,7 +55,7 @@ def build_freeze(repo: Path, original: Path, destination: Path, version='v18') -
     load_official_index(repo)  # Verify all publisher articles before copying.
     policy = read_json(repo/f'data/live_budget_policy_{version}.json')
     config = {**policy, 'models':{'draft':'openai/gpt-4.1', 'verifier':'openai/gpt-4o'},
-              'review_version':version, 'retrieval_limit':15 if version=='v19' else 12, 'max_cost_usd':'1.00'}
+              'review_version':version, 'retrieval_limit':12 if version=='v18' else 15, 'max_cost_usd':'1.00'}
     destination.mkdir(parents=True)
     def copy(source: Path, relative: str):
         target = safe_member(destination, relative)
@@ -100,7 +101,7 @@ def build_freeze(repo: Path, original: Path, destination: Path, version='v18') -
 def verify_freeze(bundle: Path, repo: Path) -> dict:
     manifest = read_json(bundle/'manifest.json')
     version=manifest.get('freeze_version')
-    require(version in {'v18','v19'}
+    require(version in {'v18','v19','v20'}
             and manifest.get('status') == 'frozen_regression_authorization_pending'
             and manifest.get('hash_method') == 'sha256_exact_bytes'
             and manifest.get('case_count') == 20, 'Unexpected v18 freeze')
@@ -124,12 +125,12 @@ def verify_freeze(bundle: Path, repo: Path) -> dict:
     cases = read_json(safe_member(bundle, manifest['input_path']))
     validate_cases(cases)
     config = read_json(safe_member(bundle, manifest['configuration_path']))
-    require(config.get('review_version') == version and config.get('retrieval_limit') == (15 if version=='v19' else 12),
+    require(config.get('review_version') == version and config.get('retrieval_limit') == (12 if version=='v18' else 15),
             'Not the original v18 configuration')
     require(config['models'] == {'draft':'openai/gpt-4.1','verifier':'openai/gpt-4o'}, 'Model roles changed')
     require(type(config['max_model_calls']) is int and 1 <= config['max_model_calls'] <= 40,
             'Invalid call budget')
-    require(type(config['max_total_tokens']) is int and 1000 <= config['max_total_tokens'] <= (300000 if version=='v19' else 200000),
+    require(type(config['max_total_tokens']) is int and 1000 <= config['max_total_tokens'] <= {'v18':200000,'v19':300000,'v20':350000}[version],
             'Invalid token budget')
     require(Decimal('0') < Decimal(config['max_cost_usd']) <= Decimal('1'), 'Invalid cost budget')
     approved_prices = {'openai/gpt-4.1':('2.00','8.00'), 'openai/gpt-4o':('2.50','10.00')}

@@ -158,6 +158,36 @@ class V18FreezeTests(unittest.TestCase):
                 run_v18_regression.main('v19')
         self.assertFalse((self.bundle.parent/'run_v19').exists())
 
+    def test_v20_preflight_no_budget_key_or_prediction_and_live_budget_before_key(self):
+        relative='scripts/run_v20_regression.py'
+        self.write(self.repo/relative,'# synthetic v20 wrapper\n')
+        self.write(self.bundle/('snapshot/'+relative),'# synthetic v20 wrapper\n')
+        self.manifest['runtime_files'].append({'repo_path':relative,'snapshot_path':'snapshot/'+relative,
+                                               'sha256':byte_hash(self.repo/relative)})
+        scorer='scripts/score_v18_regression.py'
+        self.write(self.repo/scorer,'# synthetic fixed scoring rules\n')
+        self.write(self.bundle/('snapshot/'+scorer),'# synthetic fixed scoring rules\n')
+        self.manifest['runtime_files'].append({'repo_path':scorer,'snapshot_path':'snapshot/'+scorer,
+                                               'sha256':byte_hash(self.repo/scorer)})
+        self.manifest['freeze_version']='v20'
+        self.config.update(review_version='v20',retrieval_limit=15,max_total_tokens=350000)
+        self.write_json(self.bundle/'configuration.json',self.config); self.refresh_manifest()
+        output=io.StringIO()
+        with (patch.object(run_v18_regression,'REPO',self.repo),
+              patch.object(sys,'argv',['runner','--bundle',str(self.bundle)]),
+              patch.object(run_v18_regression,'local_api_key',side_effect=AssertionError('key')),
+              patch.object(run_v18_regression,'verify_campaign',side_effect=AssertionError('campaign')),
+              redirect_stdout(output)):
+            run_v18_regression.main('v20')
+        self.assertEqual(json.loads(output.getvalue())['api_calls'],0)
+        authorization=self.bundle.parent/'approval.json'; self.write_json(authorization,{})
+        with (patch.object(run_v18_regression,'REPO',self.repo),
+              patch.object(sys,'argv',['runner','--bundle',str(self.bundle),'--live','--authorization',str(authorization)]),
+              patch.object(run_v18_regression,'verify_authorization',return_value={}),
+              patch.object(run_v18_regression,'local_api_key',side_effect=AssertionError('key'))):
+            with self.assertRaisesRegex(ValueError,'cumulative'): run_v18_regression.main('v20')
+        self.assertFalse((self.bundle.parent/'run_v20').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -92,7 +92,7 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertIn("failed acceptance", response.json()["evaluation_status"])
         self.assertEqual(response.json()["accounting"]["api_calls"], 0)
 
-    def test_recorded_v18_matches_failed_thresholds_and_v19_has_no_score(self):
+    def test_recorded_v18_and_v19_fail_with_v20_unmeasured(self):
         data=self.client.get('/api/config').json()
         summary=data['recorded_v18']
         self.assertFalse(summary['target_met'])
@@ -101,9 +101,18 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertEqual(summary['false_positives'],2)
         self.assertEqual(summary['unsafe_non_abstention']['numerator'],2)
         self.assertEqual(summary['accounting']['cost_usd'],'0.6162670')
-        self.assertIn('No v19 model predictions',summary['v19_status'])
+        latest=data['recorded_v19']
+        self.assertEqual(latest['risk_recall']['numerator'],5)
+        self.assertEqual(latest['risk_recall']['denominator'],14)
+        self.assertEqual(latest['false_positives'],0)
+        self.assertEqual(latest['unsafe_non_abstention']['numerator'],0)
+        self.assertEqual(latest['substantive_citation_support']['numerator'],2)
+        self.assertEqual(latest['substantive_citation_support']['denominator'],5)
+        self.assertEqual(latest['accounting']['cost_usd'],'0.7858850')
+        self.assertFalse(latest['target_met'])
+        self.assertIn('No v20 model predictions',latest['v20_status'])
         home=self.client.get('/').text
-        for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance']:
+        for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance','Latest v19','2/5 · 40%','v20 is an unmeasured']:
             self.assertIn(text,home)
 
     def test_live_parameters_rejected(self):

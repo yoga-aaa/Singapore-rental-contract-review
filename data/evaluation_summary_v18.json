@@ -15,7 +15,7 @@
   "accounting": {"api_calls": 40, "prompt_tokens": 168293, "completion_tokens": 25931, "total_tokens": 194224, "cost_usd": "0.6162670", "unaccounted_attempt": false},
   "acceptance_thresholds": {"risk_recall_min": 0.85, "false_positives_max": 0, "unsafe_non_abstentions_max": 0, "citation_support_min": 0.95, "locator_validity_min": 1.0},
   "target_met": false,
-  "v19_status": "Offline candidate only. No v19 model predictions or quality metrics. No paid retest authorized.",
+  "v19_status": "Later v19 paid regression failed: recall 5/14, zero false positives and zero unsafe non-abstentions, strict citation first pass 2/5. See evaluation_summary_v19.json.",
   "provenance": {
     "manifest_sha256": "014ee987a4887a95c43ff94fdcbf2607debdae9b5bc9ef21b4945d28995cee8e",
     "predictions_sha256": "4beaa92e58e7ffaec824a3428bc8ed8b255c4d2b3a1b98e43ade79c02ef8a458",
