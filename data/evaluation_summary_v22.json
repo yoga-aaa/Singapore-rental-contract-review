@@ -1,0 +1,31 @@
+{
+  "version": "v22",
+  "status": "failed_acceptance",
+  "evaluation_scope": "Complete paid regression on the same 20 exposed AI-authored, separately AI-reviewed cases with unchanged v17 labels. Not expert gold or independent generalization.",
+  "case_count": 20,
+  "risk_precision": {"numerator":6,"denominator":6,"rate":1.0},
+  "risk_recall": {"numerator":6,"denominator":14,"rate":0.42857142857142855},
+  "false_positives": 0,
+  "unsafe_non_abstention": {"numerator":0,"denominator":4,"rate":0.0},
+  "citation_locator_validity": {"numerator":6,"denominator":6,"rate":1.0},
+  "substantive_citation_support": {"numerator":6,"denominator":6,"rate":1.0},
+  "citation_rubric": "Strict whole response: every released substantive assertion, quotation, comparison, conditional consequence and question must be supported; uncertainty is not supported. Abstentions are not support successes.",
+  "citation_audit_status": "Project assistant first pass, not blinded to evaluation context. Owner confirmation pending; not independent expert review.",
+  "abstentions": 14,
+  "accounting": {"api_calls":57,"prompt_tokens":142846,"completion_tokens":29452,"total_tokens":172298,"cost_usd":"0.5746430","unaccounted_attempt":false},
+  "acceptance_thresholds": {"risk_recall_min":0.85,"false_positives_max":0,"unsafe_non_abstentions_max":0,"citation_support_min":0.95,"locator_validity_min":1.0},
+  "target_met": false,
+  "engineering_checks": {"offline_tests_passed":394,"offline_tests_skipped":0,"reproduced_recorded_requests":57,"diagnostic_api_calls":0},
+  "deployment_scope": "Public Vercel remains the historical synthetic offline demo, not v22 model inference. No public credentials or paid endpoint.",
+  "provenance": {
+    "manifest_sha256":"49c8474f89b9408a208697dd0e6e1b62ebe7476a5371dcb19aff1c6cb9dfcf33",
+    "predictions_sha256":"3ebad559dc4698d28798d506481d366e3008e50cfa411138705d4f99dc78e6a2",
+    "calls_sha256":"930eabe02cfa53289c8f66a6ac822d74f699b4f0bc15b297fbd42d145def253f",
+    "finished_sha256":"8db4c6fd06703aec07e2050596c7cf8ec11d13637a24602e55e70664e28db608",
+    "labels_sha256":"4f3dcc47121990136b951952fabea988203522fee945237ac00697ffefee2b1f",
+    "index_sha256":"a29c34e93271281696a74766fc18b854c7d175f08004ca592c160749290d0018",
+    "official_index_sha256":"dd5a73d45ec715608965656f20bcb0ffeeb23736451b6ccb670a7fd96a2b6cb8",
+    "audit_sha256":"578282de214689efb682d6e5f41d9d1a5904fcd593f545f1e3503bb63b8cdd87",
+    "evaluated_code_commit":"fb10e6b"
+  }
+}

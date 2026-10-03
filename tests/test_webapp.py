@@ -111,10 +111,21 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertEqual(latest['accounting']['cost_usd'],'0.7858850')
         self.assertFalse(latest['target_met'])
         self.assertIn('No v20 model predictions',latest['v20_status'])
-        self.assertIn('no v22 live predictions or quality scores',latest['v22_status'].lower())
+        self.assertIn('v22 paid regression failed acceptance',latest['v22_status'])
+        current=data['recorded_v22']
+        self.assertFalse(current['target_met'])
+        self.assertEqual(current['risk_recall'],{'numerator':6,'denominator':14,'rate':6/14})
+        self.assertEqual(current['false_positives'],0)
+        self.assertEqual(current['unsafe_non_abstention']['numerator'],0)
+        self.assertEqual(current['substantive_citation_support']['numerator'],6)
+        self.assertEqual(current['substantive_citation_support']['denominator'],6)
+        self.assertIn('Owner confirmation pending',current['citation_audit_status'])
+        self.assertEqual(current['accounting']['api_calls'],57)
+        self.assertEqual(current['accounting']['cost_usd'],'0.5746430')
         home=self.client.get('/').text
         for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance',
-                     'Latest v19','2/5 · 40%','latest v22','unmeasured candidates']:
+                     'Recorded v19','2/5 · 40%','Latest v22','6/14 · 42.86%','6/6 · 100%*',
+                     'not an accepted final product','unmeasured candidates']:
             self.assertIn(text,home)
 
     def test_live_parameters_rejected(self):

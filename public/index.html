@@ -73,14 +73,14 @@
       <details class="card"><summary>Reference sources & scope</summary><p class="muted">CEA templates are comparison references, not mandatory legal standards. Official guidance applies only to its stated topic and conditions. Retrieval is not proof that a source supports a conclusion.</p><div id="sources"></div></details>
       <details class="card"><summary>Recorded results & limitations</summary>
         <p class="muted">Paid regressions on the same 20 already-exposed, AI-authored and separately AI-reviewed cases with unchanged labels. Not expert gold or an independent generalization estimate.</p>
-        <table><thead><tr><th>Measure</th><th>Historical v17</th><th>Recorded v18</th><th>Latest v19</th></tr></thead><tbody>
-          <tr><td>Risk precision</td><td>5/5 · 100%</td><td>8/10 · 80%</td><td>5/5 · 100%</td></tr><tr><td>Risk recall</td><td>5/14 · 35.71%</td><td>8/14 · 57.14%</td><td>5/14 · 35.71%</td></tr>
-          <tr><td>False positives (must be zero)</td><td>0</td><td>2</td><td>0</td></tr>
-          <tr><td>Unsafe non-abstention (lower is better)</td><td>0/4 · 0%</td><td>2/4 · 50%</td><td>0/4 · 0%</td></tr><tr><td>Citation locator validity</td><td>6/6 · 100%</td><td>12/12 · 100%</td><td>5/5 · 100%</td></tr>
-          <tr><td>Substantive citation support, assistant first pass</td><td>2/6 · 33.33%</td><td>0/12 · 0%</td><td>2/5 · 40%</td></tr>
+        <table><thead><tr><th>Measure</th><th>Historical v17</th><th>Recorded v18</th><th>Recorded v19</th><th>Latest v22</th></tr></thead><tbody>
+          <tr><td>Risk precision</td><td>5/5 · 100%</td><td>8/10 · 80%</td><td>5/5 · 100%</td><td>6/6 · 100%</td></tr><tr><td>Risk recall</td><td>5/14 · 35.71%</td><td>8/14 · 57.14%</td><td>5/14 · 35.71%</td><td>6/14 · 42.86%</td></tr>
+          <tr><td>False positives (must be zero)</td><td>0</td><td>2</td><td>0</td><td>0</td></tr>
+          <tr><td>Unsafe non-abstention (lower is better)</td><td>0/4 · 0%</td><td>2/4 · 50%</td><td>0/4 · 0%</td><td>0/4 · 0%</td></tr><tr><td>Citation locator validity</td><td>6/6 · 100%</td><td>12/12 · 100%</td><td>5/5 · 100%</td><td>6/6 · 100%</td></tr>
+          <tr><td>Substantive citation support, assistant first pass</td><td>2/6 · 33.33%</td><td>0/12 · 0%</td><td>2/5 · 40%</td><td>6/6 · 100%*</td></tr>
         </tbody></table>
-        <p class="notice">v18 failed acceptance; the later v19 also failed. Final release requires recall ≥85%, zero false positives and zero unsafe non-abstentions, plus ≥95% citation support and valid locators. v20, v21 and the latest v22 are unmeasured candidates, not accepted products. v22 adds bounded context recovery and conclusion-blind auditing; passing its offline tests does not prove better recall. This public demo does not execute these model pipelines.</p>
-        <p class="muted">v17: 14/20 abstained, US$0.2722430. v18: 8/20 abstained, 40 calls, 194,224 tokens, US$0.6162670. v19: 15/20 abstained, 40 calls, 260,807 tokens, US$0.7858850. Citation audits await owner confirmation. Strict first-pass audits check every released claim: one unsupported neighboring assertion fails that response. Finding more sources or passing engineering tests does not establish improved quality. Opening this page makes no paid model calls.</p>
+        <p class="notice">v18 failed acceptance; v19 and the latest v22 also failed. Final release requires recall ≥85%, zero false positives and zero unsafe non-abstentions, plus ≥95% citation support and valid locators. v22 recall is only 6/14; it is not an accepted final product. v20 and v21 remain unmeasured candidates. This public demo does not execute these model pipelines.</p>
+        <p class="muted">v17: 14/20 abstained, US$0.2722430. v18: 8/20 abstained, 40 calls, 194,224 tokens, US$0.6162670. v19: 15/20 abstained, 40 calls, 260,807 tokens, US$0.7858850. v22: 14/20 abstained, 57 calls, 172,298 tokens, US$0.5746430. *v22 citation support is a project-assistant whole-response first pass on six released responses, not blinded expert review, and awaits owner confirmation. Abstentions are not citation-support successes. Opening this page makes no paid model calls.</p>
       </details>
     </section>
     <footer>Selected clauses only · HDB & private residential · English · No paid model calls in this public demonstration</footer>
