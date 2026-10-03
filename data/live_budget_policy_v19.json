@@ -1,0 +1,10 @@
+{
+  "max_model_calls": 40,
+  "max_total_tokens": 300000,
+  "prices": {
+    "openai/gpt-4.1": {"input_usd_per_million":"2.00", "output_usd_per_million":"8.00", "max_completion_tokens":2400},
+    "openai/gpt-4o": {"input_usd_per_million":"2.50", "output_usd_per_million":"10.00", "max_completion_tokens":2400}
+  },
+  "price_ceiling_checked_date":"2026-10-03",
+  "note":"Same two model roles, 40-call and US$1 run maximum. 300000 token reservation ceiling accommodates conservative UTF-8-byte reservations which stopped v18 before completion although actual full-run usage was 194224. No automatic paid iterations or retries."
+}

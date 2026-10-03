@@ -198,7 +198,7 @@ class OfficialIntegrationTests(unittest.TestCase):
         self.assertEqual(result['accounting']['api_calls'],0)
         self.assertEqual(result['version'],'v18')
         self.assertTrue(result['clauses'][0]['retrieved_sources'])
-        self.assertIn('Unmeasured',result['evaluation_status'])
+        self.assertIn('failed acceptance',result['evaluation_status'])
 
     def test_v18_ui_example_shows_source_locations_without_api(self):
         try:
@@ -206,7 +206,7 @@ class OfficialIntegrationTests(unittest.TestCase):
         except ImportError:
             self.skipTest('Install requirements for UI test')
         app=AppTest.from_file(str(ROOT/'app.py')).run()
-        app.selectbox(key='evidence_version').set_value('v18 — expanded official sources (unmeasured)').run()
+        app.selectbox(key='evidence_version').set_value('v18 — expanded official sources (failed regression)').run()
         app.text_area[0].set_value("The Tenant may sublet the flat with the Landlord's written consent and register the arrangement with HDB within seven days.")
         app.checkbox(key='synthetic').check(); app.checkbox(key='extraction_checked').check(); app.run()
         app.button(key='review').click().run()

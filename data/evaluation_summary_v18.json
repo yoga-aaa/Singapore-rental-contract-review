@@ -1,0 +1,27 @@
+{
+  "version": "v18",
+  "status": "failed_acceptance",
+  "evaluation_scope": "Paid regression on the same 20 exposed AI-authored, separately AI-reviewed cases and unchanged v17 labels. Not expert gold or independent generalization.",
+  "case_count": 20,
+  "risk_precision": {"numerator": 8, "denominator": 10, "rate": 0.8},
+  "risk_recall": {"numerator": 8, "denominator": 14, "rate": 0.5714285714285714},
+  "false_positives": 2,
+  "unsafe_non_abstention": {"numerator": 2, "denominator": 4, "rate": 0.5},
+  "citation_locator_validity": {"numerator": 12, "denominator": 12, "rate": 1.0},
+  "substantive_citation_support": {"numerator": 0, "denominator": 12, "rate": 0.0},
+  "citation_rubric": "Every released factual claim and consequence in a non-abstention must be supported. An unsupported neighboring assertion fails that response. Uncertain counts as not supported.",
+  "citation_audit_status": "Project assistant first pass; owner confirmation pending; not independent expert review",
+  "abstentions": 8,
+  "accounting": {"api_calls": 40, "prompt_tokens": 168293, "completion_tokens": 25931, "total_tokens": 194224, "cost_usd": "0.6162670", "unaccounted_attempt": false},
+  "acceptance_thresholds": {"risk_recall_min": 0.85, "false_positives_max": 0, "unsafe_non_abstentions_max": 0, "citation_support_min": 0.95, "locator_validity_min": 1.0},
+  "target_met": false,
+  "v19_status": "Offline candidate only. No v19 model predictions or quality metrics. No paid retest authorized.",
+  "provenance": {
+    "manifest_sha256": "014ee987a4887a95c43ff94fdcbf2607debdae9b5bc9ef21b4945d28995cee8e",
+    "predictions_sha256": "4beaa92e58e7ffaec824a3428bc8ed8b255c4d2b3a1b98e43ade79c02ef8a458",
+    "labels_sha256": "4f3dcc47121990136b951952fabea988203522fee945237ac00697ffefee2b1f",
+    "index_sha256": "a29c34e93271281696a74766fc18b854c7d175f08004ca592c160749290d0018",
+    "official_index_sha256": "dd5a73d45ec715608965656f20bcb0ffeeb23736451b6ccb670a7fd96a2b6cb8",
+    "audit_sha256": "f1785e41537de5a885a16b36fd6f50188c5e68818cff01d347674e47d536b5d3"
+  }
+}

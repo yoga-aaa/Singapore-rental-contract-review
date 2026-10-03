@@ -86,11 +86,25 @@ class PublicOfflineTests(unittest.TestCase):
                     self.assertEqual(report["accounting"]["cost_usd"], "0")
                     self.assertEqual(report["mode"], "offline")
 
-    def test_v18_retrieval_is_unmeasured_not_new_model_result(self):
+    def test_v18_retrieval_reports_failed_historical_run_not_new_model_result(self):
         response = self.post({**self.data, "review_version": "v18"})
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertIn("Unmeasured", response.json()["evaluation_status"])
+        self.assertIn("failed acceptance", response.json()["evaluation_status"])
         self.assertEqual(response.json()["accounting"]["api_calls"], 0)
+
+    def test_recorded_v18_matches_failed_thresholds_and_v19_has_no_score(self):
+        data=self.client.get('/api/config').json()
+        summary=data['recorded_v18']
+        self.assertFalse(summary['target_met'])
+        self.assertEqual(summary['risk_recall']['numerator'],8)
+        self.assertEqual(summary['risk_recall']['denominator'],14)
+        self.assertEqual(summary['false_positives'],2)
+        self.assertEqual(summary['unsafe_non_abstention']['numerator'],2)
+        self.assertEqual(summary['accounting']['cost_usd'],'0.6162670')
+        self.assertIn('No v19 model predictions',summary['v19_status'])
+        home=self.client.get('/').text
+        for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance']:
+            self.assertIn(text,home)
 
     def test_live_parameters_rejected(self):
         for key, value in [("live", True), ("mode", "live"), ("spending_confirmed", True),

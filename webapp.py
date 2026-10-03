@@ -113,7 +113,8 @@ def config():
         "privacy": "Synthetic input is sent to the hosting server, not a model API. "
                    "The application does not save it to disk. Hosting infrastructure may retain operational logs. "
                    "Identifier detection is incomplete; never upload real contracts.",
-        "v18_status": "Unmeasured source-expanded experiment. Offline execution still uses historical local rules."
+        "v18_status": "Recorded v18 regression failed acceptance (57.14% recall, 2 false positives, 2 unsafe non-abstentions). Offline execution still uses historical local rules, not the two-model pipeline.",
+        "recorded_v18": json.loads((ROOT / "data/evaluation_summary_v18.json").read_text(encoding="utf-8"))
     }
 
 

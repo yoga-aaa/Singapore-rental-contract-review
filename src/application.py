@@ -117,7 +117,7 @@ def run_document(clauses: list[Clause], housing: str, *, synthetic_confirmed: bo
               'source_index_sha256':EXPECTED_INDEX_SHA, 'clauses':[], 'stopped':False}
     if review_version == 'v18':
         result['official_source_index_sha256'] = official_hash
-        result['evaluation_status'] = 'Unmeasured expanded-source experiment; no 85% claim'
+        result['evaluation_status'] = 'Recorded v18 regression failed acceptance; not a final product'
         result['offline_scope'] = 'Legacy deterministic local rules only; new model pipeline requires a separate paid confirmation'
     config = {**policy, 'max_cost_usd':str(dollars)}
     log = io.StringIO()

@@ -59,7 +59,7 @@ function updateHousing() {
 }
 function updateVersion() {
   $("version-note").textContent = $("version").value === "v18"
-    ? "Unmeasured. Adds scoped official evidence retrieval; offline results still use historical local rules, not the new two-model pipeline."
+    ? (state.config?.v18_status || "Recorded v18 regression failed acceptance. Offline local rules only; no new model execution.")
     : "Historical local rules. This is not a new model evaluation.";
   invalidate();
 }

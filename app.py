@@ -12,9 +12,9 @@ st.warning('Research prototype, not legal advice. A pass is a limited comparison
 with st.sidebar:
     st.header('Review settings')
     housing = st.selectbox('Housing type', ['HDB','Private Residential'], key='housing')
-    version = st.selectbox('Evidence version', ['v17 — historical CEA comparison', 'v18 — expanded official sources (unmeasured)'], key='evidence_version')
+    version = st.selectbox('Evidence version', ['v17 — historical CEA comparison', 'v18 — expanded official sources (failed regression)'], key='evidence_version')
     if version.startswith('v18'):
-        st.info('v18 adds scoped HDB / URA / IRAS / Courts / CEA guidance. New labels must be independently reviewed before scoring. No new accuracy claim.')
+        st.info('v18 recorded regression failed: recall 57.14%, 2 false positives, 2 unsafe non-abstentions. Expanded-scope independent labels remain pending. Offline mode does not execute the two-model pipeline.')
     live_available = os.getenv('RENTAL_ENABLE_LIVE') == '1'
     mode = st.radio('Execution mode', ['Offline — no credits'] + (['Live — paid experimental'] if live_available else []), key='mode')
     st.caption('Offline rules run now. Unsettled clauses show model_needed; no model output is simulated.')
@@ -120,4 +120,11 @@ with st.expander('Recorded v17 regression and limits'):
               'v17 RAG':['5/5 (100%)','5/14 (35.71%)','0/4 (0%)','6/6 (100%)','2/6 (33.33%), assistant first pass'],
               'Unchanged keyword baseline':['3/4 (75%)','3/14 (21.43%)','4/4 (100%)','Not audited','Not assessed']})
     st.caption('14/20 RAG results abstained. Cost USD 0.2722430, 36 calls, 99,584 tokens. Both runs total USD 0.5105645. Citation audit awaits owner confirmation; uncertain items count as failures. Recall and 95% substantive-support goals remain unmet. No paid API call is made by opening this table.')
+with st.expander('Recorded v18 regression and v19 offline candidate'):
+    summary=json.loads((Path(__file__).parent/'data/evaluation_summary_v18.json').read_text(encoding='utf-8'))
+    st.write(summary['evaluation_scope'])
+    st.table({'Measure':['Risk precision','Risk recall','False positives','Unsafe non-abstention','Citation locator validity','Substantive citation support'],
+              'v18':['8/10 (80%)','8/14 (57.14%)','2','2/4 (50%)','12/12 (100%)','0/12 (0%), strict assistant first pass']})
+    st.caption('8/20 abstained. US$0.6162670, 40 calls, 194,224 tokens. Every released assertion is audited; unsupported neighbors fail the response. Owner confirmation pending. Failed acceptance; not a final product.')
+    st.info(summary['v19_status'])
 st.caption('No uploaded PDF is saved to disk by this app. Text stays in server session memory until cleared/closed. Personal-data detection is incomplete; do not upload real contracts. Live mode requires server enablement and explicit confirmation.')
