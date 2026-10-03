@@ -17,6 +17,7 @@
   "target_met": false,
   "v20_status": "Unmeasured task-bound candidate. No v20 model predictions or quality scores. Cumulative budget confirmation pending before further paid runs.",
   "v21_status": "Unmeasured conditions-first candidate: literal fact extraction without opinions, original-context independent comparison, bounded scenario validation. No v21 quality scores; campaign budget confirmation pending.",
+  "v22_status": "Unmeasured context-bound candidate: deduplication before task cap, bounded dependent-span context, complete scoped sources, one eligible focused reread and conclusion-blind pre-publication audit. 394 offline tests passed, no v22 live predictions or quality scores. Public demo does not run v22. Cumulative spending-cap confirmation pending.",
   "provenance": {
     "manifest_sha256": "a25a5a37083821e4df1f4fdf6eea70ca016765b964a6b018f31ebc6f5efb3dbe",
     "predictions_sha256": "0d2e23ae30193ca37bb94d138b8e1de86134942f7bd601a1927852a038d99845",

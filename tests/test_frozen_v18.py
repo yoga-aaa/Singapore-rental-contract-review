@@ -214,5 +214,54 @@ class V18FreezeTests(unittest.TestCase):
         self.assertFalse((self.bundle.parent/'run_v21').exists())
 
 
+    def prepare_v22(self):
+        for relative in ['scripts/run_v22_regression.py','scripts/score_v18_regression.py',
+                         'scripts/diagnose_v22_run.py','scripts/score_frozen_results.py']:
+            self.write(self.repo/relative,'# synthetic v22 frozen entry\n')
+            self.write(self.bundle/('snapshot/'+relative),'# synthetic v22 frozen entry\n')
+            self.manifest['runtime_files'].append({'repo_path':relative,'snapshot_path':'snapshot/'+relative,
+                'sha256':byte_hash(self.repo/relative)})
+        self.manifest['freeze_version']='v22'
+        self.config.update(review_version='v22',retrieval_limit=15,max_total_tokens=450000,max_model_calls=80)
+        self.write_json(self.bundle/'configuration.json',self.config); self.refresh_manifest()
+
+    def test_v22_free_preflight_and_campaign_required_before_key(self):
+        self.prepare_v22(); output=io.StringIO()
+        with (patch.object(run_v18_regression,'REPO',self.repo),
+              patch.object(sys,'argv',['runner','--bundle',str(self.bundle)]),
+              patch.object(run_v18_regression,'local_api_key',side_effect=AssertionError('key')),
+              patch.object(run_v18_regression,'verify_campaign',side_effect=AssertionError('campaign')),
+              redirect_stdout(output)):
+            run_v18_regression.main('v22')
+        summary=json.loads(output.getvalue())
+        self.assertEqual(summary['api_calls'],0)
+        self.assertEqual(summary['budget']['max_model_calls'],80)
+        self.assertEqual(summary['budget']['max_cost_usd'],'1.00')
+        authorization=self.bundle.parent/'approval.json'; self.write_json(authorization,{})
+        with (patch.object(run_v18_regression,'REPO',self.repo),
+              patch.object(sys,'argv',['runner','--bundle',str(self.bundle),'--live','--authorization',str(authorization)]),
+              patch.object(run_v18_regression,'verify_authorization',return_value={}),
+              patch.object(run_v18_regression,'local_api_key',side_effect=AssertionError('key'))):
+            with self.assertRaisesRegex(ValueError,'cumulative'): run_v18_regression.main('v22')
+        self.assertFalse((self.bundle.parent/'run_v22').exists())
+
+    def test_v22_new_capacity_cannot_raise_financial_or_model_ceilings(self):
+        self.prepare_v22()
+        for update in [{'max_model_calls':81},{'max_total_tokens':450001},{'max_cost_usd':'1.01'}]:
+            self.write_json(self.bundle/'configuration.json',{**self.config,**update}); self.refresh_manifest()
+            with self.subTest(update=update),self.assertRaises(ValueError):
+                verify_freeze(self.bundle,self.repo)
+
+    def test_v22_unbound_source_change_still_invalidates_freeze(self):
+        self.prepare_v22()
+        self.write(self.bundle/'snapshot/data/derived/source_sections_v15.jsonl','unbound changed source')
+        with self.assertRaisesRegex(ValueError,'Frozen artifact changed'): verify_freeze(self.bundle,self.repo)
+
+    def test_v22_metric_dependency_is_bound_to_runtime_snapshot(self):
+        self.prepare_v22()
+        self.assertIn('scripts/score_frozen_results.py',{r['repo_path'] for r in self.manifest['runtime_files']})
+        self.write(self.repo/'scripts/score_frozen_results.py','# changed metrics')
+        with self.assertRaisesRegex(ValueError,'Runtime changed'): verify_freeze(self.bundle,self.repo)
+
 if __name__ == '__main__':
     unittest.main()

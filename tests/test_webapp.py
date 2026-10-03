@@ -92,7 +92,7 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertIn("failed acceptance", response.json()["evaluation_status"])
         self.assertEqual(response.json()["accounting"]["api_calls"], 0)
 
-    def test_recorded_v18_and_v19_fail_with_v20_unmeasured(self):
+    def test_recorded_v18_and_v19_fail_with_later_candidates_unmeasured(self):
         data=self.client.get('/api/config').json()
         summary=data['recorded_v18']
         self.assertFalse(summary['target_met'])
@@ -111,8 +111,10 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertEqual(latest['accounting']['cost_usd'],'0.7858850')
         self.assertFalse(latest['target_met'])
         self.assertIn('No v20 model predictions',latest['v20_status'])
+        self.assertIn('no v22 live predictions or quality scores',latest['v22_status'].lower())
         home=self.client.get('/').text
-        for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance','Latest v19','2/5 · 40%','v20 is an unmeasured']:
+        for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance',
+                     'Latest v19','2/5 · 40%','latest v22','unmeasured candidates']:
             self.assertIn(text,home)
 
     def test_live_parameters_rejected(self):

@@ -1,0 +1,10 @@
+{
+  "max_model_calls": 80,
+  "max_total_tokens": 450000,
+  "prices": {
+    "openai/gpt-4.1": {"input_usd_per_million":"2.00", "output_usd_per_million":"8.00", "max_completion_tokens":2400},
+    "openai/gpt-4o": {"input_usd_per_million":"2.50", "output_usd_per_million":"10.00", "max_completion_tokens":2400}
+  },
+  "price_ceiling_checked_date":"2026-10-03",
+  "note":"v22 adds a conditional independent original-context audit and at most one focused correction: 2-4 calls per case, 80 maximum for the unchanged 20-case run. The US$1 financial stop, approved models, price ceilings and 2400-token output ceiling stay unchanged. Single-task correction/audit reserves at most 1600 output tokens. 450000 is a capacity ceiling, not spending permission. Version-bound approval and a human-confirmed private cumulative budget are required before key access. Budget exhaustion or unknown charges stop and preserve a partial run without headline metrics or automatic retries."
+}

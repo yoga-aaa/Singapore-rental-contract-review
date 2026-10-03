@@ -44,15 +44,19 @@ def main(version='v18'):
         return
     verify_authorization(args.authorization, checked['manifest_sha256'], checked['config'])
     require(args.authorization.resolve().is_relative_to(bundle.parent), 'Approval must remain private')
-    campaign=verify_campaign(args.campaign,REPO,checked['config']['max_cost_usd']) if version in {'v20','v21'} else None
+    campaign=verify_campaign(args.campaign,REPO,checked['config']['max_cost_usd']) if version in {'v20','v21','v22'} else None
     out = safe_member(bundle.parent, 'run_'+version)
     require(not out.exists(), 'Never overwrite, automatically resume or repeat this run')
     key = local_api_key()
     require(bool(key), 'Ignored local API credential required')
     retriever_class,reviewer=PacketRetriever,review_clause
-    if version in {'v19','v20','v21'}:
+    if version in {'v19','v20','v21','v22'}:
         from src.evidence_packet_v19 import CoverageRetriever
-        if version=='v21':
+        if version=='v22':
+            from src.evidence_packet_v22 import ConditionRetriever
+            from src.review_v22 import review_clause as version_review
+            CoverageRetriever=ConditionRetriever
+        elif version=='v21':
             from src.review_v21 import review_clause as version_review
         elif version=='v20':
             from src.review_v20 import review_clause as version_review
