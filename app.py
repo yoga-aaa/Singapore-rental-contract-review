@@ -12,6 +12,9 @@ st.warning('Research prototype, not legal advice. A pass is a limited comparison
 with st.sidebar:
     st.header('Review settings')
     housing = st.selectbox('Housing type', ['HDB','Private Residential'], key='housing')
+    version = st.selectbox('Evidence version', ['v17 — historical CEA comparison', 'v18 — expanded official sources (unmeasured)'], key='evidence_version')
+    if version.startswith('v18'):
+        st.info('v18 adds scoped HDB / URA / IRAS / Courts / CEA guidance. New labels must be independently reviewed before scoring. No new accuracy claim.')
     live_available = os.getenv('RENTAL_ENABLE_LIVE') == '1'
     mode = st.radio('Execution mode', ['Offline — no credits'] + (['Live — paid experimental'] if live_available else []), key='mode')
     st.caption('Offline rules run now. Unsettled clauses show model_needed; no model output is simulated.')
@@ -60,14 +63,16 @@ if st.button('Review selected clauses', type='primary', key='review', disabled=n
     try:
         with st.spinner('Comparing selected clauses with the housing-specific CEA reference…'):
             st.session_state['report'] = run_document(clauses,housing,synthetic_confirmed=synthetic,
-                extraction_confirmed=checked,live=mode.startswith('Live'),spending_confirmed=paid,budget=str(budget))
+                extraction_confirmed=checked,live=mode.startswith('Live'),spending_confirmed=paid,budget=str(budget),review_version=version[:3])
     except ValueError as error: st.error(str(error))
 
 report = st.session_state.get('report')
 if report:
     st.divider()
     st.header('Review report')
-    st.caption(f"Saved result • {report['housing_type']} • {report['mode']} • selected fragments only. Changing inputs does not rerun this report.")
+    st.caption(f"Saved result • {report['version']} • {report['housing_type']} • {report['mode']} • selected fragments only. Changing inputs does not rerun this report.")
+    if report['version']=='v18':
+        st.info(report['evaluation_status']+'. '+report['offline_scope'] if report['mode']=='offline' else report['evaluation_status'])
     cols = st.columns(3)
     cols[0].metric('Selected fragments processed', len(report['clauses']))
     cols[1].metric('API calls', report['accounting']['api_calls'])
@@ -80,6 +85,11 @@ if report:
     for row in report['clauses']:
         st.subheader(row['clause_id'])
         st.text(row['text'])
+        if row.get('retrieved_sources'):
+            with st.expander('Retrieved reference locations — retrieval is not proof of support'):
+                for reference in row['retrieved_sources']:
+                    st.write(f"{reference['source_id']} · {reference['section']} · {reference['source_kind']}")
+                    if reference['url']: st.link_button('Official source',reference['url'])
         if row['status'] == 'model_needed':
             st.info('model_needed — local rules cannot settle this clause. No model ran and no completed prediction is claimed.')
             continue
