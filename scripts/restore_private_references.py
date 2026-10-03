@@ -1,4 +1,4 @@
-"""Restore only the two fixed CEA PDFs omitted from a course-only evidence ZIP.
+"""Restore fixed CEA PDFs and derived indexes omitted from an evidence ZIP.
 
 Run bootstrap first. This copies verified local official downloads without API
 calls, overwriting files, changing a freeze or restoring any private case data.
@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts.bootstrap import HASHES
 from src.frozen_external import safe_member
+DERIVED_HASHES = {'source_sections_v15.jsonl': 'a29c34e93271281696a74766fc18b854c7d175f08004ca592c160749290d0018',
+                  'source_pages_v15.jsonl': '545610bae58182c80e3abfec74d5063b48e9dfa52a4d76a096359d064107606d'}
 
 
 def digest(path):
@@ -22,17 +24,23 @@ def digest(path):
 
 def restore_bundle(bundle, sources):
     manifest = json.loads((bundle / 'manifest.json').read_text(encoding='utf-8'))
-    entries = [e for e in manifest['artifacts'] if e['path'].lower().endswith('.pdf')]
-    allowed = {'snapshot/data/source_documents/' + name: sha for name, sha in HASHES.items()}
-    if len(entries) != 2 or {e['path'] for e in entries} != set(allowed):
+    pdf_allowed = {'snapshot/data/source_documents/' + name: sha for name, sha in HASHES.items()}
+    index_allowed = {'snapshot/data/derived/' + name: sha for name, sha in DERIVED_HASHES.items()}
+    entries = [e for e in manifest['artifacts'] if e['path'].lower().endswith('.pdf') or e['path'] in index_allowed]
+    pdf_entries = [e for e in entries if e['path'].lower().endswith('.pdf')]
+    if len(pdf_entries) != 2 or {e['path'] for e in pdf_entries} != set(pdf_allowed):
         raise ValueError('Only the two registered template snapshot paths can be restored')
+    allowed = {**pdf_allowed, **index_allowed}
+    if len({e['path'] for e in entries}) != len(entries):
+        raise ValueError('Duplicate reference snapshot path')
     planned = []
     for entry in entries:
         relative = entry['path']
         if entry['sha256'] != allowed[relative]:
             raise ValueError('Frozen PDF hash is not the registered fixed version')
         target = safe_member(bundle, relative)
-        source = sources / Path(relative).name
+        folder = sources if relative in pdf_allowed else sources.parent / 'derived'
+        source = folder / Path(relative).name
         if not source.is_file() or digest(source) != entry['sha256']:
             raise ValueError('Run bootstrap to obtain the fixed official template: ' + source.name)
         if target.exists() and digest(target) != entry['sha256']:
@@ -48,7 +56,7 @@ def restore_bundle(bundle, sources):
         if digest(target) != expected:
             raise ValueError('Restored PDF hash failed')
         restored += 1
-    return {'restored': restored, 'already_verified': 2 - restored, 'model_api_calls': 0}
+    return {'restored': restored, 'already_verified': len(entries) - restored, 'model_api_calls': 0}
 
 
 def main():

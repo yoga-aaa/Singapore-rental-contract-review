@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from scripts.bootstrap import HASHES
-from scripts.restore_private_references import restore_bundle
+from scripts.restore_private_references import DERIVED_HASHES, restore_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,6 +30,21 @@ class ReferenceRestorationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'hash'):
                 restore_bundle(root, root)
             self.assertFalse((root / 'snapshot').exists())
+
+    @unittest.skipUnless(all((ROOT / 'data/derived' / name).exists() for name in DERIVED_HASHES)
+                         and all((ROOT / 'data/source_documents' / name).exists() for name in HASHES),
+                         'Run bootstrap for fixed official PDFs and indexes')
+    def test_reference_indexes_are_restored_only_at_frozen_hashes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            entries = [{'path': 'snapshot/data/source_documents/' + name, 'sha256': sha}
+                       for name, sha in HASHES.items()]
+            entries.extend({'path': 'snapshot/data/derived/' + name, 'sha256': sha}
+                           for name, sha in DERIVED_HASHES.items())
+            self.manifest(root, entries)
+            result = restore_bundle(root, ROOT / 'data/source_documents')
+            self.assertEqual(result['restored'], 4)
+            self.assertEqual(restore_bundle(root, ROOT / 'data/source_documents')['already_verified'], 4)
 
     @unittest.skipUnless(all((ROOT / 'data/source_documents' / name).exists() for name in HASHES),
                          'Run bootstrap for fixed official PDF fixtures')

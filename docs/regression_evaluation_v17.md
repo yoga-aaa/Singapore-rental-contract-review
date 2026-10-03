@@ -56,7 +56,7 @@ Exact-byte SHA-256 locks:
 | v15 section index, both runs | a29c34e93271281696a74766fc18b854c7d175f08004ca592c160749290d0018 |
 | v17 citation audit | 33c8054618779c0e20a876ce1944d1dfbfe2cd20aecdd102d15b7bec184cd8fd |
 
-The original private batch folders are kept unchanged outside GitHub. The course-only evidence package excludes credentials and original CEA PDFs; restore those two PDFs through verified official downloads before running the hash-verifying scorer. Do not publicly upload this evidence archive. Only aggregate outcomes and methods are published in this document.
+The original private batch folders are kept unchanged outside GitHub. The course-only evidence package excludes credentials, original CEA PDFs and derived full-reference indexes. Run bootstrap, then restore the two PDFs and two indexes from the verified official downloads before running the hash-verifying scorer. Do not publicly upload this evidence archive. Only aggregate outcomes and methods are published in this document.
 
 ```powershell
 python scripts/restore_private_references.py --bundle PATH_TO_PRIVATE/regression_v17/freeze_v17
