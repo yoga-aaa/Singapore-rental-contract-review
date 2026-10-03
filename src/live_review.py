@@ -12,6 +12,7 @@ from src.evidence_spans import spans_for_chunks
 from src.evidence_verifier import merged_usage, verify_candidate
 from src.comparison_checks import comparison_issue, direct_no_review_allowed, omission_issue
 from src.grounding import grounding_issue
+from src.contract_spans import resolve_contract_spans
 from src.direct_matches import direct_minor_repair_match, direct_named_occupancy_match
 from src.direct_differences import direct_late_rent_review, direct_discretionary_rent_review
 from src.direct_remaining import (
@@ -280,7 +281,7 @@ def direct_breach_termination_match(clause_text: str, chunks: list[RetrievedChun
         re.IGNORECASE,
     )
     for chunk in chunks:
-        if chunk.clause_id not in {"7.2", "8.2"} or "termination_notice" not in chunk.topics:
+        if chunk.clause_id not in {"7.1", "7.2", "8.1", "8.2"} or "termination_notice" not in chunk.topics:
             continue
         match = quote_pattern.search(chunk.text)
         if match:
@@ -401,6 +402,10 @@ def review_clause(housing_type: str, clause_text: str, retriever: LocalBM25Retri
     if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is required in the environment or local .env file.")
     raw, usage = _request_openrouter(build_request(housing_type, clause_text, chunks), api_key)
+    try:
+        raw = resolve_contract_spans(raw, clause_text)
+    except (ValueError, TypeError, KeyError):
+        return abstain('The model selected an invalid contract span ID.', usage, api_called=True)
     draft = validate_output(raw, chunks, usage, clause_text, require_grounding=True, structural_only=True)
     if draft.abstained:
         return draft

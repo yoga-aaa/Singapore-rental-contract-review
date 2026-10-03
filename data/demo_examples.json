@@ -1,0 +1,7 @@
+[
+  {"title":"HDB clear adverse termination", "housing_type":"HDB", "purpose":"Offline rule demonstration, not a fresh LLM inference.", "clauses":["The Landlord may end the tenancy at any time for any reason by a text message on the same day."]},
+  {"title":"HDB rent and utilities", "housing_type":"HDB", "purpose":"A paraphrase can pass when local evidence supports the same obligations.", "clauses":["The Tenant shall pay rent monthly in advance without deduction or set-off and pay charges for water, electricity, gas and sewerage."]},
+  {"title":"HDB evidence insufficient", "housing_type":"HDB", "purpose":"A vague clause cannot be treated as safe or automatically flagged as a supported risk.", "clauses":["All matters will be managed appropriately by the parties."]},
+  {"title":"Private notice delivery", "housing_type":"Private Residential", "purpose":"Shows exact reference locator and quote in a local comparison.", "clauses":["A notice can be delivered personally or sent by Certificate of Posting to the stated address."]},
+  {"title":"Private model needed", "housing_type":"Private Residential", "purpose":"Offline mode explicitly reports unfinished analysis instead of inventing an AI result.", "clauses":["The Tenant shall pay the cost of a pet-related repair subject to prior approval and a refundable bond of S$150."]}
+]

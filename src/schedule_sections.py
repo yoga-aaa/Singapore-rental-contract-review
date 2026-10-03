@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from src.source_sections import compact
+from src.source_sections import compact, is_page_furniture
 
 
 ITEM_START = re.compile(r"^(\d{1,2})\.\s+(.+)$")
@@ -18,6 +18,16 @@ SELECTED_TOPICS = {
 }
 
 
+def item_topics(item_id: str, text: str) -> list[str]:
+    if item_id in SELECTED_TOPICS:
+        return SELECTED_TOPICS[item_id]
+    if re.search(r"DIPLOMATIC\s*/\s*BREAK CLAUSE", text):
+        return ["termination_notice"]
+    if "PROBLEM-FREE PERIOD" in text:
+        return ["minor_repair"]
+    return []
+
+
 def split_schedule_items(pages: Iterable[tuple[int, str]], source: dict[str, str]) -> list[dict[str, object]]:
     """Keep only named occupants and configurable rent/deposit/repair fields."""
     result: list[dict[str, object]] = []
@@ -25,10 +35,11 @@ def split_schedule_items(pages: Iterable[tuple[int, str]], source: dict[str, str
     current_lines: list[tuple[int, str]] = []
 
     def emit() -> None:
-        if current_id not in SELECTED_TOPICS or not current_lines:
+        if current_id is None or not current_lines:
             return
         text = compact(" ".join(line for _, line in current_lines))
-        if len(text) < 10:
+        topics = item_topics(current_id, text)
+        if len(text) < 10 or not topics:
             return
         first_page, last_page = current_lines[0][0], current_lines[-1][0]
         locator = f"Schedule ITEM {current_id} / PDF page {first_page}"
@@ -42,14 +53,23 @@ def split_schedule_items(pages: Iterable[tuple[int, str]], source: dict[str, str
             "page_number": first_page,
             "section": locator,
             "clause_id": f"ITEM{current_id}",
-            "topics": SELECTED_TOPICS[current_id],
+            "topics": topics,
             "text": text,
         })
 
     in_schedule = False
     for page_number, raw_text in pages:
+        in_footnote = False
         for raw_line in raw_text.splitlines():
             line = compact(raw_line)
+            if is_page_furniture(line):
+                continue
+            # A superscript-number footnote has no item dot. It is retained in
+            # the page index, not falsely appended to the last schedule item.
+            if re.match(r"^\d{1,2}\s+[A-Z][a-z]", line):
+                in_footnote = True
+            if in_footnote:
+                continue
             if line == "SCHEDULE":
                 in_schedule = True
             if line == "OPERATIVE PART":

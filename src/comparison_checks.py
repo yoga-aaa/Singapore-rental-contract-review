@@ -69,7 +69,7 @@ def source_scope_issue(reason: str, evidence: list[dict[str, str]]) -> str | Non
                      r"no such|does not (?:mention|address|provide for|specify)|"
                      r"not (?:mentioned|addressed|provided))\b", statement):
             return "The explanation treats the silence of cited excerpts as a contract-wide reference rule."
-        if re.search(r"\b(?:only (?:allows?|permits?)|(?:allows?|permits?) only)\b", statement):
+        if re.search(r"\b(?:only (?:allows?|permits?)|(?:allows?|permits?) only|only (?:upon|on|at)|only allowed|not during (?:the )?fixed term)\b", statement):
             quoted = " ".join(item["quote"] for item in evidence).casefold()
             if not re.search(r"\bonly\b", quoted):
                 return "The explanation makes an exhaustive reference claim not stated in the cited text."
@@ -92,7 +92,17 @@ def comparison_issue(label: str, reason: str, clause_text: str,
             if omission_issue(f"The contract omits {protection}.", clause_text):
                 return "The explanation asserts a safeguard waiver that the selected contract clause does not state."
     quoted = " ".join(item["quote"] for item in evidence).casefold()
+    comparison_prose = ' '.join(item['reference_claim'] + ' ' + item['tenant_consequence'] for item in comparisons or [])
+    if re.search(r'\breplenish\w*\b', clause_text, re.I) and re.search(
+        r'\b(?:only|has|have)\b.{0,30}\b(?:7|seven)\b.{0,40}\b(?:remedy|before deduction)\b',
+        reason + ' ' + comparison_prose, re.I
+    ):
+        return 'A post-deduction replenishment deadline was confused with a pre-deduction remedy period.'
     if label == "no_material_difference_found":
+        if re.search(r'\b(?:report|surveyor|plumber)\b', clause_text, re.I) and re.search(
+            r'\b(?:prima facie|final and binding|cost of such report|fees shall)\b', clause_text, re.I
+        ) and not re.search(r'\b(?:prima facie|final and binding|surveyor|cost of (?:such )?report)\b', quoted):
+            return 'The cited repair responsibility does not cover the separate dispute-evidence or report-fee mechanism.'
         if conditional_subletting(clause_text) and "sublet" in quoted:
             if re.search(r"\b(?:match\w*|same|equivalent|align\w*)\b", reason, re.I):
                 return "Conditional permission to sublet was incorrectly equated with a prohibition."

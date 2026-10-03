@@ -11,13 +11,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from src.retrieval import LocalBM25Retriever  # noqa: E402
+from src.index_paths import CURRENT_SECTION_INDEX  # noqa: E402
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("housing_type", choices=["HDB", "Private Residential"])
     parser.add_argument("query")
-    parser.add_argument("--index", type=Path, default=REPO_ROOT / "data" / "derived" / "source_sections.jsonl")
+    parser.add_argument("--index", type=Path, default=CURRENT_SECTION_INDEX)
     parser.add_argument("--limit", type=int, default=4)
     args = parser.parse_args()
 

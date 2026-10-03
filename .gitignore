@@ -1,4 +1,9 @@
 .env
+.env.*
+!.env.example
+submission/
+tmp/
+artifacts/
 .venv/
 __pycache__/
 *.py[cod]
@@ -8,4 +13,3 @@ results/*.json
 results/*.csv
 !results/development_rag_predictions_v10.csv
 !results/.gitkeep
-

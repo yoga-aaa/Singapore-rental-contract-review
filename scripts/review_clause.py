@@ -15,13 +15,14 @@ sys.path.insert(0, str(REPO_ROOT))
 from src.live_review import review_clause  # noqa: E402
 from src.rag_review import build_request  # noqa: E402
 from src.retrieval import LocalBM25Retriever  # noqa: E402
+from src.index_paths import CURRENT_SECTION_INDEX  # noqa: E402
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("housing_type", choices=["HDB", "Private Residential"])
     parser.add_argument("clause")
-    parser.add_argument("--index", type=Path, default=REPO_ROOT / "data" / "derived" / "source_sections.jsonl")
+    parser.add_argument("--index", type=Path, default=CURRENT_SECTION_INDEX)
     parser.add_argument("--dry-run", action="store_true", help="Print the structured API request without calling OpenRouter.")
     args = parser.parse_args()
 

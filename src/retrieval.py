@@ -33,7 +33,11 @@ def query_topics(query: str) -> set[str]:
     topics: set[str] = set()
     process_context: str | None = None
     for sentence in re.split(r"(?<=[.;])\s+", query.lower()):
-        deposit = bool(re.search(r"\b(?:deposit\w*|deduct\w*|refund\w*)\b", sentence))
+        deposit_sentence = sentence
+        if re.search(r'\brent\b', sentence) and not re.search(r'\b(?:deposit\w*|refund\w*)\b', sentence):
+            # Rent payable without deduction is not a security-deposit obligation.
+            deposit_sentence = re.sub(r'\bwithout\s+(?:any\s+)?deductions?\b', '', sentence)
+        deposit = bool(re.search(r"\b(?:deposit\w*|deduct\w*|refund\w*)\b", deposit_sentence))
         repair = bool(re.search(r"\b(?:repair\w*|structural|plumbing|wiring|maintenance(?! fee))\b", sentence))
         termination = bool(re.search(r"\bterminat\w*\b|\bend (?:the |this )?(?:tenancy|agreement)\b", sentence))
         # A refund at expiry/termination describes deposit settlement, not an exit right.

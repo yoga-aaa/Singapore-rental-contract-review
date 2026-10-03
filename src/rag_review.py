@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 from src.evidence_spans import spans_for_chunks
 from src.grounding import grounded_schema
+from src.contract_spans import contract_spans, id_schema
 from src.retrieval import LocalBM25Retriever, RetrievedChunk
 
 
@@ -130,11 +131,14 @@ Provide comparisons before deciding the label: for each material obligation, cop
             f"SELECTED_HOUSING_TYPE: {housing_type}",
             "UNTRUSTED_CONTRACT_CLAUSE:",
             clause_text,
+            'CONTRACT_SPANS (select an ID; never generate or shorten a quote):',
+            json.dumps(contract_spans(clause_text), ensure_ascii=False),
             "RETRIEVED_REFERENCE_EXCERPTS:",
             evidence_block(chunks),
         ]
     )
     system += " Keep each contract_quote as short as possible while retaining its actor and relevant condition (prefer under 200 characters); keep reference_claim and tenant_consequence under 120 characters where possible."
+    system += " For this version use contract_span_id instead of contract_quote in comparisons. Select an exact C-number from CONTRACT_SPANS. The program supplies the verbatim text. Never use ellipses, combine spans, paraphrase text, or invent an ID. Read the entire clause for conditions even when selecting one span. Replenishment after a deduction is not a pre-deduction remedy period. A separate report-fee or binding dispute mechanism needs its own comparison; matching the repair payer alone does not justify passing the full clause."
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
@@ -144,7 +148,7 @@ def build_request(housing_type: str, clause_text: str, chunks: list[RetrievedChu
         "temperature": 0,
         "max_tokens": 1600,
         "messages": build_messages(housing_type, clause_text, chunks),
-        "response_format": {"type": "json_schema", "json_schema": grounded_schema(OUTPUT_SCHEMA)},
+        "response_format": {"type": "json_schema", "json_schema": id_schema(grounded_schema(OUTPUT_SCHEMA))},
     }
 
 

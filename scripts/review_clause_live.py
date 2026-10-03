@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from src.live_review import ModelReviewRequired, review_clause  # noqa: E402
 from src.retrieval import LocalBM25Retriever  # noqa: E402
+from src.index_paths import CURRENT_SECTION_INDEX  # noqa: E402
 
 
 def main() -> None:
@@ -21,7 +22,7 @@ def main() -> None:
     parser.add_argument("housing_type", choices=["HDB", "Private Residential"])
     parser.add_argument("clause")
     parser.add_argument("--offline", action="store_true", help="Run local checks only; do not read the API key or call OpenRouter.")
-    parser.add_argument("--index", type=Path, default=REPO_ROOT / "data" / "derived" / "source_sections.jsonl")
+    parser.add_argument("--index", type=Path, default=CURRENT_SECTION_INDEX)
     args = parser.parse_args()
 
     retriever = LocalBM25Retriever.from_jsonl(args.index)

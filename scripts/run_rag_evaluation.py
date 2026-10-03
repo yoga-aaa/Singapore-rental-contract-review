@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from src.evaluate import evaluate  # noqa: E402
 from src.live_review import ModelReviewRequired, review_clause  # noqa: E402
 from src.retrieval import LocalBM25Retriever  # noqa: E402
+from src.index_paths import CURRENT_SECTION_INDEX  # noqa: E402
 
 
 FIELDS = [
@@ -29,7 +30,7 @@ GROUNDED_FIELDS = [*FIELDS, "comparisons_json"]
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cases", type=Path, default=REPO_ROOT / "data" / "development_cases.csv")
-    parser.add_argument("--index", type=Path, default=REPO_ROOT / "data" / "derived" / "source_sections.jsonl")
+    parser.add_argument("--index", type=Path, default=CURRENT_SECTION_INDEX)
     parser.add_argument("--registry", type=Path, default=REPO_ROOT / "data" / "source_registry.csv")
     parser.add_argument("--output", type=Path, default=REPO_ROOT / "results" / "development_rag_predictions_v10.csv")
     parser.add_argument("--limit", type=int, default=4, help="Maximum clause excerpts sent to the model.")

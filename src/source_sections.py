@@ -8,6 +8,8 @@ from collections.abc import Iterable
 
 CLAUSE_START = re.compile(r"^(\d{1,2}\.\d{1,2})\b(?:\s+(.*))?$")
 PAGE_HEADER = re.compile(r"^[HDP RIVATE] +[A-Z ]+P a g e\s+\d+ of \d+", re.IGNORECASE)
+CHAPTER_HEADING = re.compile(r"^\d{1,2}\.\s+[A-Z][A-Z ,&/-]+$")
+ANNEXURE_START = re.compile(r"^ANNEXURE\s+[A-Z]\b")
 MAX_CHARS = 1700
 
 
@@ -15,10 +17,21 @@ def compact(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def is_page_furniture(line: str) -> bool:
+    collapsed = re.sub(r"\s+", "", line).upper()
+    return bool(PAGE_HEADER.match(line) or re.fullmatch(
+        r"(?:HDBFLAT|PRIVATERESIDENTIAL)TENANCYAGREEMENT(?:PAGE\d+OF\d+)?",
+        collapsed,
+    ) or re.fullmatch(r"PAGE\s*\d+\s*OF\s*\d+", line, re.IGNORECASE))
+
+
 def short_heading(line: str) -> bool:
+    words = re.findall(r"[A-Za-z][A-Za-z'-]*", line)
+    joiners = {"of", "and", "to", "for", "by", "the", "in", "from", "with", "at", "on", "or", "as", "up", "without", "terminate"}
     return bool(
         line and len(line) <= 85 and not line.endswith((".", ";", ","))
         and not re.match(r"^(?:[a-z]\)|\d+(?:\.\d+)?\b)", line)
+        and words and all(word[0].isupper() or word in joiners for word in words)
     )
 
 
@@ -31,14 +44,17 @@ def topics_for_clause(clause_id: str, text: str) -> list[str]:
         topics.add("security_deposit")
     if clause_id == "2.3" or (clause_id != "2.1" and ("utilities" in lowered or "water, electricity" in lowered)):
         topics.add("utilities")
-    if clause_id in {"1.3", "1.4", "2.1"} or "default in rent" in lowered or "rental amount" in lowered:
+    if clause_id in {"1.3", "1.4", "2.1"} or "default in rent" in lowered or "rental amount" in lowered or "review the rent" in lowered:
         topics.add("rent")
-    if clause_id in {"4.1", "4.2"} or "maintenance of premises" in lowered or "structural condition" in lowered:
+    if clause_id.startswith("4.") or "maintenance of premises" in lowered or "structural condition" in lowered:
         topics.add("minor_repair")
-    if "right to terminate" in lowered or "termination" in lowered or "service of notices" in lowered:
+    if ("right to terminate" in lowered or "termination" in lowered or "service of notices" in lowered
+            or "automatically terminated" in lowered or "right of re-entry" in lowered or "deemed service" in lowered):
         topics.add("termination_notice")
-    if "immigration authority" in lowered or "lawfully resident" in lowered:
+    if "immigration authority" in lowered or "lawfully resident" in lowered or "immigration status" in lowered or clause_id.startswith("3."):
         topics.add("occupancy_subletting")
+    if "joint inspection" in lowered and ("damage" in lowered or "defects" in lowered):
+        topics.update({"security_deposit", "minor_repair"})
     return sorted(topics)
 
 
@@ -48,6 +64,7 @@ def split_operative_sections(pages: Iterable[tuple[int, str]], source: dict[str,
     current_id: str | None = None
     current_lines: list[tuple[int, str]] = []
     in_operative_part = False
+    pending_heading: tuple[int, str] | None = None
 
     def emit_clause() -> None:
         if current_id is None:
@@ -91,6 +108,8 @@ def split_operative_sections(pages: Iterable[tuple[int, str]], source: dict[str,
         groups: list[list[tuple[int, str]]] = []
         group: list[tuple[int, str]] = []
         for item in current_lines:
+            if len(compact(item[1])) > MAX_CHARS:
+                raise ValueError(f"Oversized source line in clause {current_id}; refusing silent truncation.")
             candidate = compact(" ".join(text for _, text in [*group, item]))
             if group and len(candidate) > MAX_CHARS:
                 groups.append(group)
@@ -126,16 +145,26 @@ def split_operative_sections(pages: Iterable[tuple[int, str]], source: dict[str,
     for page_number, raw_text in pages:
         for raw_line in raw_text.splitlines():
             line = compact(raw_line)
-            if not line or PAGE_HEADER.match(line):
+            if not line or is_page_furniture(line):
                 continue
             if line == "OPERATIVE PART":
                 in_operative_part = True
                 continue
             if not in_operative_part:
                 continue
+            if ANNEXURE_START.match(line):
+                emit_clause()
+                return chunks
+            if CHAPTER_HEADING.match(line):
+                emit_clause()
+                current_id = None
+                current_lines = []
+                pending_heading = None
+                continue
             match = CLAUSE_START.match(line)
             if match:
-                heading: tuple[int, str] | None = None
+                heading = pending_heading
+                pending_heading = None
                 if current_lines and short_heading(current_lines[-1][1]):
                     heading = current_lines.pop()
                 emit_clause()
@@ -143,5 +172,7 @@ def split_operative_sections(pages: Iterable[tuple[int, str]], source: dict[str,
                 current_lines = ([heading] if heading else []) + [(page_number, line)]
             elif current_id is not None:
                 current_lines.append((page_number, line))
+            elif short_heading(line):
+                pending_heading = (page_number, line)
     emit_clause()
     return chunks

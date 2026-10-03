@@ -6,15 +6,17 @@ import argparse
 import csv
 import json
 import re
+import sys
 from pathlib import Path
 
-from pypdf import PdfReader
-
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+
+from src.index_paths import CURRENT_PAGE_INDEX  # noqa: E402
+from src.pdf_text import extract_layout_pages  # noqa: E402
 DEFAULT_REGISTRY = REPO_ROOT / "data" / "source_registry.csv"
 DEFAULT_DOCUMENT_DIR = REPO_ROOT / "data" / "source_documents"
-DEFAULT_OUTPUT = REPO_ROOT / "data" / "derived" / "source_pages.jsonl"
+DEFAULT_OUTPUT = CURRENT_PAGE_INDEX
 
 
 def compact_text(text: str) -> str:
@@ -32,6 +34,8 @@ def main() -> None:
     parser.add_argument("--document-dir", type=Path, default=DEFAULT_DOCUMENT_DIR)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
+    if args.output.exists():
+        raise FileExistsError(f"Refusing to overwrite an index: {args.output}. Choose a new --output path.")
 
     with args.registry.open(encoding="utf-8", newline="") as file:
         sources = list(csv.DictReader(file))
@@ -44,8 +48,8 @@ def main() -> None:
         if not document_path.exists():
             raise FileNotFoundError(f"Missing registered source: {document_path}")
 
-        for page_number, page in enumerate(PdfReader(document_path).pages, start=1):
-            text = compact_text(page.extract_text() or "")
+        for page_number, raw_text in extract_layout_pages(document_path):
+            text = compact_text(raw_text)
             if not text:
                 continue
             chunks.append(
@@ -61,10 +65,10 @@ def main() -> None:
             )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", encoding="utf-8") as file:
+    with args.output.open("x", encoding="utf-8", newline="\n") as file:
         for chunk in chunks:
             file.write(json.dumps(chunk, ensure_ascii=False) + "\n")
-    print(f"Built {len(chunks)} chunks from {len(sources)} registered sources: {args.output.relative_to(REPO_ROOT)}")
+    print(f"Built {len(chunks)} chunks from {len(sources)} registered sources: {args.output}")
 
 
 if __name__ == "__main__":

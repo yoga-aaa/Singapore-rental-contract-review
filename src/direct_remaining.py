@@ -81,12 +81,13 @@ def direct_variable_notice_review(text: str, chunks: list[RetrievedChunk]) -> Re
     if len(text) > 250 or not _has(text, r"\b(?:end|terminat\w*)\b", r"\bnotice\b",
                                     r"\b(?:length|period)\b.*\bdecided later\b.*\bLandlord\b"):
         return None
-    operative = _find(chunks, "7.2")
-    if operative is None or not _has(operative.text, r"terminate", r"seven \(7\) days", r"fourteen \(14\) days"):
+    operative = next((item for item in chunks if item.clause_id in {"7.1", "7.2"}
+                      and _has(item.text, r"terminate", r"seven \(7\) days", r"fourteen \(14\) days")), None)
+    if operative is None:
         return None
     return ReviewResult(
         label="review_required", clause_category="termination_notice",
-        reason="The contract leaves the notice length to a later Landlord decision; cited Clause 7.2 instead ties Landlord termination to specified events, including seven-day rent default or written breach notice with fourteen days to rectify.",
+        reason=f"The contract leaves the notice length to a later Landlord decision; cited Clause {operative.clause_id} instead ties Landlord termination to specified events, including seven-day rent default or written breach notice with fourteen days to rectify.",
         follow_up_question="Which termination ground and notice process is intended?",
         source_id=operative.source_id, source_section=operative.section, abstained=False,
         evidence=(_evidence(operative, "termination_notice"),),
@@ -99,8 +100,9 @@ def direct_occupant_documents_match(text: str, chunks: list[RetrievedChunk]) -> 
         return None
     if not re.search(r"\bTenant\b\s+(?:shall|must|will)\s+(?:provide|produce)\b", text, re.I):
         return None  # The template places production on the tenant, not the occupiers.
-    operative = _find(chunks, "3.3")
-    if operative is None or not _has(operative.text, r"Where required by the Landlord", r"documents of all occupiers"):
+    operative = next((item for item in chunks if item.clause_id in {"3.2", "3.3"}
+                      and _has(item.text, r"Where required by the Landlord", r"documents of all occupiers")), None)
+    if operative is None:
         return None
     return ReviewResult(
         label="no_material_difference_found", clause_category="occupancy_subletting",

@@ -42,7 +42,7 @@ def direct_unrestricted_termination_review(text: str, chunks: list[RetrievedChun
         return None
     if not re.search(r"\bLandlord\b\s+(?:may|can)\s+(?:end|terminate)\b", text, re.I):
         return None
-    source = next((item for item in chunks if item.clause_id in {"7.2", "8.2"}
+    source = next((item for item in chunks if item.clause_id in {"7.1", "7.2", "8.1", "8.2"}
                    and _matches(item.text, r"terminated by the Landlord in writing", r"seven \(7\) days",
                                 r"fourteen \(14\) days")), None)
     if source is None:
@@ -104,7 +104,7 @@ def direct_notice_delivery_match(text: str, chunks: list[RetrievedChunk]) -> Rev
         return None
     if re.search(r"\b(?:only|except|unless|email|text message|emoji|whatsapp|immediately)\b", text, re.IGNORECASE):
         return None
-    source = next((item for item in chunks if item.clause_id in {"11.2", "12.2"} and _matches(
+    source = next((item for item in chunks if item.clause_id in {"11.1", "11.2", "12.1", "12.2"} and _matches(
         item.text, r"delivered to the Tenant personally", r"Certificate of Posting", r"address"
     )), None)
     if source is None:
