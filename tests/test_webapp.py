@@ -130,15 +130,24 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertEqual(candidate['unsafe_non_abstention']['numerator'],0)
         self.assertEqual(candidate['substantive_citation_support']['numerator'],13)
         self.assertEqual(candidate['accounting']['cost_usd'],'0.6028355')
+        self.assertEqual(candidate['owner_release_selection']['version'],'v25')
+        self.assertTrue(candidate['owner_release_selection']['paid_tuning_stopped'])
+        self.assertFalse(candidate['owner_release_selection']['selection_is_citation_audit_confirmation'])
+        self.assertFalse(candidate['product_integration']['public_executes_v25'])
         self.assertFalse(data['live_enabled'])
         self.assertEqual(data['recorded_v23']['risk_recall']['numerator'],9)
         self.assertEqual(data['recorded_v24']['risk_recall']['numerator'],4)
         home=self.client.get('/').text
         for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance',
                      'Recorded v19','2/5 · 40%','Recorded v22','6/14 · 42.86%','6/6 · 100%*',
-                     'not an accepted final product','unmeasured candidates','Latest v25','13/14 · 92.86%',
-                     'Owner citation confirmation is pending','do not execute v25']:
+                     'not an accepted final product','unmeasured candidates','Final v25','13/14 · 92.86%',
+                     'Owner citation confirmation is pending','does not execute v25']:
             self.assertIn(text,home)
+
+    def test_public_cannot_execute_final_v25_even_when_server_live_enabled(self):
+        with patch.dict('os.environ',{'RENTAL_ENABLE_LIVE':'1'}), \
+             patch('src.review_v25._request_openrouter',side_effect=AssertionError('No public paid call')):
+            self.assertEqual(self.post({**self.data,'review_version':'v25'}).status_code,422)
 
     def test_live_parameters_rejected(self):
         for key, value in [("live", True), ("mode", "live"), ("spending_confirmed", True),

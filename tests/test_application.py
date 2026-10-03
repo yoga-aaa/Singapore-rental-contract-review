@@ -55,9 +55,49 @@ class UITests(unittest.TestCase):
     def test_demo_and_download_no_credits(self):
         app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py')).run()
         self.assertEqual(len(app.exception),0)
+        app.selectbox(key='evidence_version').set_value('v17 — historical CEA comparison').run()
         app.radio(key='input_method').set_value('Built-in synthetic example').run()
         app.checkbox(key='synthetic').check(); app.checkbox(key='extraction_checked').check(); app.run()
         app.button(key='review').click().run()
         self.assertEqual(len(app.exception),0)
         self.assertTrue(any(c.value=='review_required' for c in app.code))
         self.assertEqual(app.session_state['report']['accounting']['api_calls'],0)
+
+    def test_final_v25_default_is_honest_offline_preview(self):
+        with patch('src.application.local_api_key',side_effect=AssertionError('No key')), \
+             patch('src.review_v25._request_openrouter',side_effect=AssertionError('No model')):
+            app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py')).run()
+            self.assertEqual(app.selectbox(key='evidence_version').value,'v25 — final model engine')
+            app.radio(key='input_method').set_value('Built-in synthetic example').run()
+            app.checkbox(key='synthetic').check(); app.checkbox(key='extraction_checked').check(); app.run()
+            app.button(key='review').click().run()
+        self.assertEqual(len(app.exception),0)
+        report=app.session_state['report']
+        self.assertEqual(report['version'],'v25')
+        self.assertEqual(report['clauses'][0]['status'],'model_needed')
+        self.assertIsNone(report['clauses'][0]['result'])
+        self.assertEqual(report['accounting']['api_calls'],0)
+
+    def test_final_v25_report_renders_original_evidence_and_bounded_context(self):
+        # Display-only synthetic fixture, not a paid response or quality score.
+        original='The Landlord refunds the deposit within seventeen days after handover.'
+        reference='The deposit balance is refunded when the Term expires or is terminated.'
+        report={'version':'v25','housing_type':'HDB','mode':'live',
+                'evaluation_status':'Citation owner confirmation pending',
+                'offline_scope':'Reference preview only','stopped':False,
+                'accounting':{'api_calls':3,'cost_usd':'0.00003'},
+                'clauses':[{'clause_id':'SIMULATED_UI','text':original,'status':'completed',
+                            'result':{'label':'review_required','reason':'Limited condition contrast only.',
+                                      'follow_up_question':'Clarify the refund trigger.',
+                                      'evidence':[{'source_id':'SIMULATED_SOURCE','source_section':'Test paragraph',
+                                                   'quote':reference}],
+                                      'comparisons':[{'difference':'Synthetic bounded display fixture.',
+                                                      'scope':'Other terms remain unapproved.',
+                                                      'contract_context':original}]}}]}
+        app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app.py')).run()
+        app.session_state['report']=report
+        app.run()
+        self.assertEqual(len(app.exception),0)
+        self.assertTrue(any(t.value==reference for t in app.text))
+        self.assertGreaterEqual(sum(t.value==original for t in app.text),2)
+        self.assertTrue(any('Other terms remain unapproved' in c.value for c in app.caption))

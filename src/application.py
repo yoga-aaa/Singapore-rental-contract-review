@@ -100,7 +100,7 @@ def run_document(clauses: list[Clause], housing: str, *, synthetic_confirmed: bo
         raise ValueError('Budget must be greater than zero and no more than US$1.')
     if live and (os.getenv('RENTAL_ENABLE_LIVE') != '1' or not spending_confirmed):
         raise ValueError('Live API is disabled. Server-side enablement and a new explicit spending confirmation are required.')
-    if review_version not in {'v17','v18'}: raise ValueError('Unknown review version.')
+    if review_version not in {'v17','v18','v25'}: raise ValueError('Unknown review version.')
     retriever = load_retriever()
     reviewer = review_clause
     policy = POLICY
@@ -112,13 +112,24 @@ def run_document(clauses: list[Clause], housing: str, *, synthetic_confirmed: bo
         reviewer = atomic_review
         policy = json.loads((REPO/'data/live_budget_policy_v18.json').read_text(encoding='utf-8'))
         official_hash = json.loads((REPO/'data/official_reference_registry_v18.json').read_text(encoding='utf-8'))['index_sha256']
+    elif review_version == 'v25':
+        from src.evidence_packet_v22 import ConditionRetriever
+        from src.review_v25 import review_clause as final_review
+        retriever = ConditionRetriever.from_repo(REPO)
+        reviewer = final_review
+        policy = json.loads((REPO/'data/live_budget_policy_v25.json').read_text(encoding='utf-8'))
+        official_hash = json.loads((REPO/'data/official_reference_registry_v18.json').read_text(encoding='utf-8'))['index_sha256']
     result = {'version':review_version, 'mode':'live' if live else 'offline', 'housing_type':housing,
               'scope':'Selected fragments only; not a whole-contract approval or legal advice',
               'source_index_sha256':EXPECTED_INDEX_SHA, 'clauses':[], 'stopped':False}
-    if review_version == 'v18':
+    if review_version in {'v18','v25'}:
         result['official_source_index_sha256'] = official_hash
-        result['evaluation_status'] = 'Recorded v18 regression failed acceptance; not a final product'
-        result['offline_scope'] = 'Legacy deterministic local rules only; new model pipeline requires a separate paid confirmation'
+        if review_version == 'v18':
+            result['evaluation_status'] = 'Recorded v18 regression failed acceptance; not a final product'
+            result['offline_scope'] = 'Legacy deterministic local rules only; new model pipeline requires a separate paid confirmation'
+        else:
+            result['evaluation_status'] = 'Owner-selected final v25 engine; fixed regression gates met, citation owner confirmation pending; not independent generalization'
+            result['offline_scope'] = 'Reference preview only; no v25 model prediction without explicit paid confirmation'
     config = {**policy, 'max_cost_usd':str(dollars)}
     log = io.StringIO()
     meter = MeteredTransport(config, log, **({'request':request} if request is not None else {}))
@@ -127,8 +138,8 @@ def run_document(clauses: list[Clause], housing: str, *, synthetic_confirmed: bo
         if live:
             key = local_api_key()
             if not key: raise ValueError('API key missing. Keep it in the ignored repository-root .env.')
-            if review_version == 'v18':
-                stack.enter_context(patch('src.review_v18._request_openrouter', meter))
+            if review_version in {'v18','v25'}:
+                stack.enter_context(patch(f'src.review_{review_version}._request_openrouter', meter))
             else:
                 stack.enter_context(patch('src.live_review._request_openrouter', meter))
                 stack.enter_context(patch('src.evidence_verifier._request_openrouter', meter))
@@ -136,14 +147,19 @@ def run_document(clauses: list[Clause], housing: str, *, synthetic_confirmed: bo
             meter.case_id = clause.clause_id
             before = meter.cost
             row = {'clause_id':clause.clause_id, 'pages':clause.pages, 'text':clause.text}
-            if review_version == 'v18':
+            if review_version in {'v18','v25'}:
                 packet = retriever.packet(clause.text,housing)
                 row['retrieved_sources'] = [{'source_id':r['source_id'],'section':r['section'],
                                             'source_kind':r['source_kind'],'url':r.get('url','')}
                                            for r in packet['references']]
                 row['packet_truncated'] = packet['truncated']
             try:
-                reviewed = reviewer(housing, clause.text, retriever, limit=12 if review_version=='v18' else 4, api_key=key, allow_api=live)
+                # Final v25 is a model pipeline, not a deterministic demo.
+                # Do not turn an unexecuted pipeline into a completed abstention.
+                if review_version == 'v25' and not live:
+                    raise ModelReviewRequired()
+                limit = {'v17':4, 'v18':12, 'v25':15}[review_version]
+                reviewed = reviewer(housing, clause.text, retriever, limit=limit, api_key=key, allow_api=live)
                 row.update(status='completed', result=asdict(reviewed))
             except ModelReviewRequired:
                 row.update(status='model_needed', result=None)

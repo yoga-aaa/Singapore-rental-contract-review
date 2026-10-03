@@ -2,11 +2,11 @@
 
 An individual PE6201 prototype that compares selected English clauses from Singapore residential tenancy agreements with the relevant CEA agreement template. Choose **HDB** or **Private Residential** before review. The output is one of `review_required`, `no_material_difference_found`, or `insufficient_evidence`, with source-backed evidence when it does not abstain. It is **not legal advice** or a verdict that a contract is safe to sign.
 
-## Current status: v25 regression gates met; owner confirmation and product integration pending
+## Current status: owner-selected final v25, local UI integrated
 
 **v25 completed all 20 unchanged cases and meets the numerical regression gates:** 13/14 recall (92.86%), 13/13 precision, zero false positives, 0/4 unsafe non-abstentions, 13/13 valid locators and 13/13 strict whole-response citation support on the assistant first pass. Owner confirmation is pending, not expert gold or an independent generalization estimate. One risk still abstains. Cost US$0.6028355, 56 calls, 222,402 tokens; all requests reproduce. Failed v23 (9/14) and v24 (4/14) are retained. See [measured improvement and limitations](docs/v25_recall_worklog_zh.md) and [v25 aggregate](data/evaluation_summary_v25.json).
 
-The measured engine is available through the version-bound private regression entrypoint. The public offline demo and existing Streamlit UI have not been switched to v25. Do not infer a new model prediction from opening the website. Final owner review, local product integration and submission materials remain separate next steps; manuscripts/videos are not uploaded.
+The owner selected v25 as the final engine on 2026-10-04; paid tuning has stopped. Streamlit now defaults to v25 with offline reference preview only; a new v25 prediction requires local server enablement, synthetic-data confirmation and explicit spending confirmation. The cloud site still runs historical offline rules, never anonymous paid v25 inference. See [final version and operating boundaries](docs/final_v25_release_zh.md). Owner citation review remains pending; the version selection is not audit confirmation. Submission materials are a separate next step; manuscripts/videos are not uploaded.
 
 The repository also has an **offline-only Vercel web adapter**. Its entrypoint is `webapp:app`, declared in `pyproject.toml`, not Streamlit `app.py`. Import the repository root and use branch `codex/project-foundation`; see [Vercel deployment instructions](docs/vercel_deployment_zh.md). The cloud adapter rejects live/key parameters even if a server environment accidentally enables live mode. No model API credential is configured; this is not a new model evaluation.
 
@@ -30,6 +30,7 @@ Tested with Python 3.12 on Windows. Start a fresh checkout:
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts/bootstrap.py
+.\.venv\Scripts\python.exe scripts/bootstrap_official_v18.py
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 .\.venv\Scripts\python.exe scripts/check_product.py
 .\.venv\Scripts\python.exe -m streamlit run app.py

@@ -53,14 +53,14 @@ v25 manifest SHA256：4f7075dff064985c32f0f67c981b760563ce2aa44c31869d00c30660f9
 
 当前20条已曝光且AI编写、不同聊天AI审核，用户此前接受。该批是回归集，不是新独立评估，也不是法学生/专家gold；继续调试本批可能过拟合。独立泛化须冻结候选后，用新未曝光案例和独立复核标签另行验证。
 
-公网Vercel仍为历史合成离线演示，不运行v25模型，不开放匿名付费入口、不放密钥。本机现有Streamlit选择仍是旧版本，本记录不声称已经接入新版。模型引擎数值达标与产品界面接入、用户引用复核、最终交付材料是不同步骤。最终稿和视频仍不推送仓库。
+用户随后明确选择v25作为最终引擎，停止追加付费调参。本机Streamlit现已接入v25并默认选择它；默认仍是免费引用预览，显示model_needed，不伪造v25预测。真正执行须本机启用并明确确认本次付费。公网Vercel仍为历史合成离线演示，不运行v25模型，不开放匿名付费入口、不放密钥。版本选择不等于用户逐条确认引用；引用复核和最终交付材料仍是独立步骤。最终稿和视频仍不推送仓库。见final_v25_release_zh.md。
 
 本轮使用OpenAI Docs指导结构化数据边界与固定全量评测；保留原模型，不把schema合规当成语义正确。依据：[结构化输出](https://developers.openai.com/api/docs/guides/structured-outputs)、[评测实践](https://developers.openai.com/api/docs/guides/evaluation-best-practices)。
 
 ## 免费复核
 
     .venv/Scripts/python.exe -m unittest discover -s tests -q
-    .venv/Scripts/python.exe scripts/run_v25_regression.py --bundle ../v25-regression-2026-10-04/freeze_v25
-    .venv/Scripts/python.exe scripts/diagnose_v25_run.py --bundle ../v25-regression-2026-10-04/freeze_v25 --run ../v25-regression-2026-10-04/run_v25
+    .venv/Scripts/python.exe ../v25-regression-2026-10-04/freeze_v25/snapshot/scripts/run_v25_regression.py --bundle ../v25-regression-2026-10-04/freeze_v25
+    .venv/Scripts/python.exe ../v25-regression-2026-10-04/freeze_v25/snapshot/scripts/diagnose_v25_run.py --bundle ../v25-regression-2026-10-04/freeze_v25 --run ../v25-regression-2026-10-04/run_v25
 
-完整冻结未改变时，可用评分入口复核；以后代码变动则必须运行该冻结的snapshot/scripts/score_v18_regression.py，禁止用新规则给旧预测重计。
+接入仅改变application与界面，冻结内原评分运行时不改写；当前仓库不能代替原冻结去重计旧预测。运行该冻结的snapshot/scripts/score_v18_regression.py复核旧成绩，不加--live、不覆盖原结果。

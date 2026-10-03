@@ -18,7 +18,7 @@
       <p class="eyebrow">UNDERSTAND BEFORE YOU SIGN</p>
       <h1>A closer look at<br>your rental clauses.</h1>
       <p class="lede">Compare selected English tenancy clauses with housing-specific CEA references. Clarify supported potential risks; do not mistake a limited comparison for approval of a whole contract.</p>
-      <div class="notice"><strong>Research prototype, not legal advice.</strong> Only synthetic, non-personal data. Quality targets remain unmet. This public version runs local rules, not an AI model, and cannot spend model credits.</div>
+      <div class="notice"><strong>Research prototype, not legal advice.</strong> Only synthetic, non-personal data. Final v25 meets fixed-regression numerical gates; citation owner confirmation is pending. This public version runs historical local rules, not v25 AI inference, and cannot spend model credits.</div>
     </section>
     <section class="workspace" aria-label="Contract review">
       <aside class="settings card">
@@ -74,7 +74,7 @@
       <details class="card"><summary>Recorded results & limitations</summary>
         <p class="muted">Paid regressions on the same 20 already-exposed, AI-authored and separately AI-reviewed cases with unchanged labels. Not expert gold or an independent generalization estimate.</p>
 
-        <table><thead><tr><th>Measure</th><th>Recorded v23</th><th>Recorded v24</th><th>Latest v25</th></tr></thead><tbody>
+        <table><thead><tr><th>Measure</th><th>Recorded v23</th><th>Recorded v24</th><th>Final v25</th></tr></thead><tbody>
           <tr><td>Risk precision</td><td>9/9 · 100%</td><td>4/4 · 100%</td><td>13/13 · 100%</td></tr>
           <tr><td>Risk recall</td><td>9/14 · 64.29%</td><td>4/14 · 28.57%</td><td>13/14 · 92.86%</td></tr>
           <tr><td>False positives (must be zero)</td><td>0</td><td>0</td><td>0</td></tr>
@@ -82,7 +82,7 @@
           <tr><td>Citation locator validity</td><td>9/9 · 100%</td><td>4/4 · 100%</td><td>13/13 · 100%</td></tr>
           <tr><td>Substantive citation support, assistant first pass</td><td>9/9 · 100%*</td><td>4/4 · 100%*</td><td>13/13 · 100%*</td></tr>
         </tbody></table>
-        <p class="notice">v25 meets the numerical gates on this fixed regression: recall ≥85%, zero false positives, zero unsafe non-abstentions, valid locators and citation support ≥95% on the assistant first pass. Owner citation confirmation is pending. This is not independent generalization, expert gold or a real-world zero-error guarantee. This offline demo and the current local UI do not execute v25.</p>
+        <p class="notice">Owner-selected final v25 meets the numerical gates on this fixed regression: recall ≥85%, zero false positives, zero unsafe non-abstentions, valid locators and citation support ≥95% on the assistant first pass. Owner citation confirmation is pending. This is not independent generalization, expert gold or a real-world zero-error guarantee. This public offline demo does not execute v25. The local Streamlit UI defaults to final v25, with live inference requiring server enablement and a new explicit paid confirmation.</p>
         <p class="muted">v23: 11/20 abstained, 59 calls, US$0.9116455. v24: 16/20 abstained, 61 calls, US$0.9423875. v25: 7/20 abstained, 56 calls, 222,402 tokens, US$0.6028355; one risk still missed. Every version used the complete unchanged 20 cases; failed versions are retained. *All citation support numbers are whole-response project-assistant first passes, not blinded expert reviews, and await owner confirmation. Abstentions are not support successes.</p>
         <p class="muted">Earlier measured versions:</p>
         <table><thead><tr><th>Measure</th><th>Historical v17</th><th>Recorded v18</th><th>Recorded v19</th><th>Recorded v22</th></tr></thead><tbody>

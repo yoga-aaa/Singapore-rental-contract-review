@@ -48,7 +48,19 @@
     "locator_validity_min": 1
   },
   "target_met": true,
-  "release_status": "Candidate engine only; public UI remains historical offline demo. No real-world zero-error guarantee.",
+  "release_status": "Owner-selected final v25 engine, integrated into the local Streamlit UI. Public UI remains historical offline demo. No real-world zero-error guarantee.",
+  "owner_release_selection": {
+    "version": "v25",
+    "date_local": "2026-10-04",
+    "paid_tuning_stopped": true,
+    "selection_is_citation_audit_confirmation": false
+  },
+  "product_integration": {
+    "local_default_version": "v25",
+    "local_default_mode": "offline_reference_preview_model_needed",
+    "local_live_requires_server_enablement_and_spending_confirmation": true,
+    "public_executes_v25": false
+  },
   "engineering_checks": {
     "offline_tests_passed": 431,
     "offline_tests_skipped": 0,
