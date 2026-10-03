@@ -1,0 +1,18 @@
+{
+  "max_model_calls": 80,
+  "max_total_tokens": 450000,
+  "prices": {
+    "openai/gpt-4.1": {
+      "input_usd_per_million": "2.00",
+      "output_usd_per_million": "8.00",
+      "max_completion_tokens": 2400
+    },
+    "openai/gpt-4o": {
+      "input_usd_per_million": "2.50",
+      "output_usd_per_million": "10.00",
+      "max_completion_tokens": 2400
+    }
+  },
+  "price_ceiling_checked_date": "2026-10-03",
+  "note": "v23 original evidence-ID selection retains v22 two to four bounded calls, original-context independent audit, fixed models, price ceilings and US$1 stop. No inferred performance from IDs. Private US$5 campaign includes v19 and v22 actual spend."
+}

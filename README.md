@@ -2,7 +2,11 @@
 
 An individual PE6201 prototype that compares selected English clauses from Singapore residential tenancy agreements with the relevant CEA agreement template. Choose **HDB** or **Private Residential** before review. The output is one of `review_required`, `no_material_difference_found`, or `insufficient_evidence`, with source-backed evidence when it does not abstain. It is **not legal advice** or a verdict that a contract is safe to sign.
 
-## Current status: offline demo; latest v22 paid regression failed acceptance
+## Current status: v25 regression gates met; owner confirmation and product integration pending
+
+**v25 completed all 20 unchanged cases and meets the numerical regression gates:** 13/14 recall (92.86%), 13/13 precision, zero false positives, 0/4 unsafe non-abstentions, 13/13 valid locators and 13/13 strict whole-response citation support on the assistant first pass. Owner confirmation is pending, not expert gold or an independent generalization estimate. One risk still abstains. Cost US$0.6028355, 56 calls, 222,402 tokens; all requests reproduce. Failed v23 (9/14) and v24 (4/14) are retained. See [measured improvement and limitations](docs/v25_recall_worklog_zh.md) and [v25 aggregate](data/evaluation_summary_v25.json).
+
+The measured engine is available through the version-bound private regression entrypoint. The public offline demo and existing Streamlit UI have not been switched to v25. Do not infer a new model prediction from opening the website. Final owner review, local product integration and submission materials remain separate next steps; manuscripts/videos are not uploaded.
 
 The repository also has an **offline-only Vercel web adapter**. Its entrypoint is `webapp:app`, declared in `pyproject.toml`, not Streamlit `app.py`. Import the repository root and use branch `codex/project-foundation`; see [Vercel deployment instructions](docs/vercel_deployment_zh.md). The cloud adapter rejects live/key parameters even if a server environment accidentally enables live mode. No model API credential is configured; this is not a new model evaluation.
 

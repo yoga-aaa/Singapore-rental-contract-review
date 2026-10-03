@@ -20,10 +20,10 @@ def lines(path):
 
 def score(bundle: Path, run: Path, audit: Path | None = None) -> dict:
     manifest = read_json(bundle/'manifest.json')
-    require(manifest['freeze_version'] in {'v18','v19','v20','v21','v22'}, 'Expected expanded-source freeze')
+    require(manifest['freeze_version'] in {'v18','v19','v20','v21','v22','v23','v24','v25'}, 'Expected expanded-source freeze')
     for entry in manifest['artifacts']:
         require(byte_hash(safe_member(bundle,entry['path'])) == entry['sha256'], 'Frozen artifact changed')
-    if manifest['freeze_version']=='v22':
+    if manifest['freeze_version'] in {'v22','v23','v24','v25'}:
         # Freeze the imported metric helper as well as the entrypoint. An old
         # v22 run can be scored from its saved snapshot, never with new rules.
         runtime_root=Path(__file__).resolve().parents[1]

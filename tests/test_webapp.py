@@ -122,10 +122,22 @@ class PublicOfflineTests(unittest.TestCase):
         self.assertIn('Owner confirmation pending',current['citation_audit_status'])
         self.assertEqual(current['accounting']['api_calls'],57)
         self.assertEqual(current['accounting']['cost_usd'],'0.5746430')
+        candidate=data['recorded_v25']
+        self.assertTrue(candidate['target_met'])
+        self.assertEqual(candidate['status'],'measured_gates_met_owner_confirmation_pending')
+        self.assertEqual(candidate['risk_recall'],{'numerator':13,'denominator':14,'rate':13/14})
+        self.assertEqual(candidate['false_positives'],0)
+        self.assertEqual(candidate['unsafe_non_abstention']['numerator'],0)
+        self.assertEqual(candidate['substantive_citation_support']['numerator'],13)
+        self.assertEqual(candidate['accounting']['cost_usd'],'0.6028355')
+        self.assertFalse(data['live_enabled'])
+        self.assertEqual(data['recorded_v23']['risk_recall']['numerator'],9)
+        self.assertEqual(data['recorded_v24']['risk_recall']['numerator'],4)
         home=self.client.get('/').text
         for text in ['Recorded v18','8/14 · 57.14%','0/12 · 0%','v18 failed acceptance',
-                     'Recorded v19','2/5 · 40%','Latest v22','6/14 · 42.86%','6/6 · 100%*',
-                     'not an accepted final product','unmeasured candidates']:
+                     'Recorded v19','2/5 · 40%','Recorded v22','6/14 · 42.86%','6/6 · 100%*',
+                     'not an accepted final product','unmeasured candidates','Latest v25','13/14 · 92.86%',
+                     'Owner citation confirmation is pending','do not execute v25']:
             self.assertIn(text,home)
 
     def test_live_parameters_rejected(self):

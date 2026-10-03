@@ -116,7 +116,10 @@ def config():
         "v18_status": "Recorded v18 regression failed acceptance (57.14% recall, 2 false positives, 2 unsafe non-abstentions). Offline execution still uses historical local rules, not the two-model pipeline.",
         "recorded_v18": json.loads((ROOT / "data/evaluation_summary_v18.json").read_text(encoding="utf-8")),
         "recorded_v19": json.loads((ROOT / "data/evaluation_summary_v19.json").read_text(encoding="utf-8")),
-        "recorded_v22": json.loads((ROOT / "data/evaluation_summary_v22.json").read_text(encoding="utf-8"))
+        "recorded_v22": json.loads((ROOT / "data/evaluation_summary_v22.json").read_text(encoding="utf-8")),
+        "recorded_v23": json.loads((ROOT / "data/evaluation_summary_v23.json").read_text(encoding="utf-8")),
+        "recorded_v24": json.loads((ROOT / "data/evaluation_summary_v24.json").read_text(encoding="utf-8")),
+        "recorded_v25": json.loads((ROOT / "data/evaluation_summary_v25.json").read_text(encoding="utf-8"))
     }
 
 

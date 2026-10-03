@@ -1,0 +1,67 @@
+{
+  "version": "v24",
+  "status": "failed_acceptance",
+  "evaluation_scope": "Expanded-source regression on 20 exposed AI-authored cases; unchanged v17 comparison labels; not independent generalization or expert gold",
+  "case_count": 20,
+  "risk_precision": {
+    "numerator": 4,
+    "denominator": 4,
+    "rate": 1
+  },
+  "risk_recall": {
+    "numerator": 4,
+    "denominator": 14,
+    "rate": 0.2857142857142857
+  },
+  "false_positives": 0,
+  "unsafe_non_abstention": {
+    "numerator": 0,
+    "denominator": 4,
+    "rate": 0
+  },
+  "citation_locator_validity": {
+    "numerator": 4,
+    "denominator": 4,
+    "rate": 1
+  },
+  "substantive_citation_support": {
+    "numerator": 4,
+    "denominator": 4,
+    "rate": 1
+  },
+  "citation_rubric": "Strict whole response: every released assertion, quotation, comparison, conditional consequence and question; uncertainty is not supported, abstentions are not successes.",
+  "citation_audit_status": "Project assistant first pass, not blinded to evaluation context. Owner confirmation pending; not independent expert review.",
+  "abstentions": 16,
+  "accounting": {
+    "api_calls": 61,
+    "prompt_tokens": 320086,
+    "completion_tokens": 24582,
+    "total_tokens": 344668,
+    "cost_usd": "0.9423875",
+    "unaccounted_attempt": false
+  },
+  "acceptance_thresholds": {
+    "risk_recall_min": 0.85,
+    "false_positives_max": 0,
+    "unsafe_non_abstentions_max": 0,
+    "citation_support_min": 0.95,
+    "locator_validity_min": 1
+  },
+  "target_met": false,
+  "release_status": "Candidate engine only; public UI remains historical offline demo. No real-world zero-error guarantee.",
+  "engineering_checks": {
+    "offline_tests_passed": 418,
+    "offline_tests_skipped": 0,
+    "reproduced_recorded_requests": 61,
+    "diagnostic_api_calls": 0
+  },
+  "provenance": {
+    "manifest_sha256": "a42f0b78bdbdedf1a318a02611ea5f5eb6c4d5303b778a6c09fd6d680a265844",
+    "predictions_sha256": "1d540120447676a9fbb49898592d92979346fbe7356b5b40d91a9d3b215421e4",
+    "finished_sha256": "a087ecaf450b07ea9cb61049199b27bd29931e59c2ed5160e88f796fdf70f61f",
+    "labels_sha256": "4f3dcc47121990136b951952fabea988203522fee945237ac00697ffefee2b1f",
+    "index_sha256": "a29c34e93271281696a74766fc18b854c7d175f08004ca592c160749290d0018",
+    "official_index_sha256": "dd5a73d45ec715608965656f20bcb0ffeeb23736451b6ccb670a7fd96a2b6cb8",
+    "audit_sha256": "2712a880522e23ed0973ad7dde2355942ce19c6caeae482f3cc7f5c9faf42ff4"
+  }
+}

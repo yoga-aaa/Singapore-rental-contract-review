@@ -1,0 +1,18 @@
+{
+  "max_model_calls": 80,
+  "max_total_tokens": 450000,
+  "prices": {
+    "openai/gpt-4.1": {
+      "input_usd_per_million": "2.00",
+      "output_usd_per_million": "8.00",
+      "max_completion_tokens": 2400
+    },
+    "openai/gpt-4o": {
+      "input_usd_per_million": "2.50",
+      "output_usd_per_million": "10.00",
+      "max_completion_tokens": 2400
+    }
+  },
+  "price_ceiling_checked_date": "2026-10-03",
+  "note": "v25 fixes scalar actor selection and source paragraph selection. Same independent semantic contrasts, two-to-four bounded calls, full originals, models, unchanged20labels, US$1 run and US$5 cumulative limits. Source completeness is not a semantic verdict."
+}
