@@ -9,6 +9,21 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .streamlit/secrets.toml
+# Demonstration manuscripts and recordings must remain private/local.
+/docs/demo_script*.md
+/docs/*narration*.md
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+*.m4v
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.srt
+*.vtt
 results/*.json
 results/*.csv
 !results/development_rag_predictions_v10.csv
