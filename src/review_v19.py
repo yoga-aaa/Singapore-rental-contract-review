@@ -73,6 +73,14 @@ def response_issue(raw,clause,packet,verifier):
     return None
 
 
+def tenant_rental_permission(text):
+    """A positive tenant permission, not 'may not'/'not permitted'."""
+    for match in re.finditer(r'\btenant\w*\b[^.;]{0,55}\b(?:may|can|allowed|permitted|authorised|authorized)\b[^.;]{0,55}\b(?:sublet|sub.let|rent out)\w*\b',text,re.I):
+        if not re.search(r'\b(?:not|never|no|cannot)\b',match.group(0),re.I):
+            return True
+    return False
+
+
 def claim_issue(row,clause,refs):
     spans=contract_spans(clause)
     selected=' '.join(spans[c] for c in row['contract_span_ids'])
@@ -98,13 +106,14 @@ def claim_issue(row,clause,refs):
                      and re.search(r'\b(?:passport|identit\w*|notify|notification|consecutive days)\b',selected,re.I)))
             and not re.search(r'\bguests?\b',quote,re.I)):
         return 'Occupier duties do not settle ordinary guest documentation or stay thresholds.'
-    if (any(r.get('source_kind')=='housing_policy_background' and r.get('source_id','').startswith('HDB_') for r in chosen)
-            and re.search(r'\b(?:tenant\w*|renter\w*)\b.{0,55}\b(?:may|can|allowed|permitted|authorised|authorized)\b.{0,55}\b(?:sublet|sub.let|rent out)\w*\b',prose,re.I)
-            and re.search(r'\b(?:owner|you)\b.{0,90}\b(?:rent out|renting out)\b',quote,re.I)):
-        if not any(re.search(r'\btenant\w*\b.{0,60}\b(?:may|can|allowed|permitted|authorised|authorized)\b.{0,50}\b(?:sublet|sub.let|rent out)\b',r['text'],re.I)
-                   and not re.search(r'\btenant\w*\b.{0,30}\b(?:must not|cannot|can not|not allowed|not permitted)\b',r['text'],re.I)
-                   for r in chosen):
+    hdb_policy=any(r.get('source_kind')=='housing_policy_background' and r.get('source_id','').startswith('HDB_') for r in chosen)
+    if hdb_policy:
+        if tenant_rental_permission(prose) and not any(tenant_rental_permission(r['text']) for r in chosen):
             return 'Owner rental permissions were transferred to a tenant without tenant-specific permission evidence.'
+        if (re.search(r'\btenant\w*\b',selected,re.I) and re.search(r'\b(?:sublet|sub.let|rent out)\w*\b',selected,re.I)
+                and re.search(r'\bowners?\b',row['reference_claim'],re.I)
+                and not re.search(r'\btenants?\s+(?:further\s+)?(?:must|shall|may|can|cannot|will|agree\w*|does?|are|is)\b',row['reference_claim'],re.I)):
+            return 'Owner-only duties do not settle the selected tenant subletting obligation.'
     if (mechanism=='expert_evidence_and_fees' and re.search(r'\b(?:fee|cost)\w*\b',selected,re.I)
             and not any(re.search(r'\b(?:expert|surveyor|report)\w*\b',r['text'],re.I)
                         and re.search(r'\b(?:fee|cost)\w*\b',r['text'],re.I) for r in chosen)):

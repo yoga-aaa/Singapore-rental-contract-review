@@ -163,11 +163,21 @@ class ClaimGateTests(unittest.TestCase):
         clause='The tenant may sublet a bedroom with landlord consent and registration.'
         row=comparison(clause,'subletting_permission','occupancy_subletting')
         row['reference_claim']='The tenant may rent out bedrooms after registration.'
-        ref=reference('policy','occupancy_subletting','As an owner you may rent out bedrooms. Your tenants must not rent out the flat or bedrooms.')
+        ref=reference('policy','occupancy_subletting','Flat owners may rent out bedrooms. Their tenants must not rent out the flat or bedrooms.')
         ref.update(source_id='HDB_SYNTHETIC',source_kind='housing_policy_background')
         self.assertIsNotNone(self.issue(row,clause,ref))
         row['reference_claim']='The tenants must not rent out bedrooms.'
         self.assertIsNone(self.issue(row,clause,ref))
+        row['reference_claim']='The tenants are not permitted to sublet bedrooms.'
+        self.assertIsNone(self.issue(row,clause,ref))
+
+    def test_owner_only_registration_is_not_tenant_subletting_comparator(self):
+        clause='The tenant must not sublet the flat or its bedrooms.'
+        row=comparison(clause,'subletting_permission','occupancy_subletting')
+        row['reference_claim']='Flat owners must register rental tenants.'
+        ref=reference('policy','occupancy_subletting','Flat owners must register tenants. Their tenants must not further rent out the flat or bedrooms.')
+        ref.update(source_id='HDB_SYNTHETIC',source_kind='housing_policy_background')
+        self.assertIsNotNone(self.issue(row,clause,ref))
 
     def test_default_is_not_exhaustive_landlord_exit_evidence(self):
         clause='The landlord may end the tenancy early because the flat is required for own occupation.'
