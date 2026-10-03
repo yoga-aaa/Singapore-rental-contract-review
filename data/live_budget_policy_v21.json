@@ -1,0 +1,10 @@
+{
+  "max_model_calls": 40,
+  "max_total_tokens": 350000,
+  "prices": {
+    "openai/gpt-4.1": {"input_usd_per_million":"2.00", "output_usd_per_million":"8.00", "max_completion_tokens":2400},
+    "openai/gpt-4o": {"input_usd_per_million":"2.50", "output_usd_per_million":"10.00", "max_completion_tokens":2400}
+  },
+  "price_ceiling_checked_date":"2026-10-03",
+  "note":"Preserved role, price ceilings, 2400-token output limits and US$1/40-call per-run cap. Stage one extracts literal atoms only; stage two independently compares original contexts with no draft conclusions. Private campaign cap and version-bound authorization checked before key read. 350000 tokens is a reservation ceiling, not spending permission. Unknown charges stop; no automatic retries."
+}

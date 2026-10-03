@@ -2,7 +2,7 @@
 
 An individual PE6201 prototype that compares selected English clauses from Singapore residential tenancy agreements with the relevant CEA agreement template. Choose **HDB** or **Private Residential** before review. The output is one of `review_required`, `no_material_difference_found`, or `insufficient_evidence`, with source-backed evidence when it does not abstain. It is **not legal advice** or a verdict that a contract is safe to sign.
 
-## Current status: offline demo; v19 failed acceptance; v20 unmeasured candidate
+## Current status: offline demo; v19 failed acceptance; v21 unmeasured candidate
 
 The repository also has an **offline-only Vercel web adapter**. Its entrypoint is `webapp:app`, declared in `pyproject.toml`, not Streamlit `app.py`. Import the repository root and use branch `codex/project-foundation`; see [Vercel deployment instructions](docs/vercel_deployment_zh.md). The cloud adapter rejects live/key parameters even if a server environment accidentally enables live mode. No model API credential is configured; this is not a new model evaluation.
 
@@ -13,6 +13,8 @@ The opt-in **v18** evidence selector adds seven verified official pages / 49 com
 **The newly authorized v19 paid run failed acceptance.** On all 20 unchanged cases it recorded 5/14 recall, 5/5 precision, zero false positives and zero unsafe non-abstentions. Strict whole-response citation first pass passed 2/5 (40%), with owner confirmation pending; valid locators were 5/5. All 40 calls and US$0.7858850 are accounted. See [the current technical work record](docs/v20_worklog_zh.md) and [public v19 aggregate](data/evaluation_summary_v19.json).
 
 **v20 is an unmeasured candidate, not the final product.** It binds fine-grained mechanisms and source groups to contract spans, requires literal source facts and publishes only one supported limited risk while leaving neighbors unapproved. Passing offline tests is not a model quality result. Version-bound authorization, a confirmed cumulative budget and a fresh full run are required before further paid execution. Final acceptance requires recall at least 85%, zero false positives and zero unsafe non-abstentions, plus at least 95% citation support and valid locators, all together. Final submission materials remain deferred until acceptance.
+
+**v21 implements the subsequent root-cause redesign; it is also unmeasured.** The first call extracts literal actor/action/trigger/rate/payer/prerequisite/exception facts with no risk or relation fields. The second independently compares original contract/reference context, receives no draft conclusions, and corrects incomplete facts. Typed same-situation contrasts require positive reference support and preserve causal conditions, deadline ambiguity, lock-in, notice, compensation, grace and caps. Published explanations are bounded to one validated contrast, not arbitrary model prose. Full originals and unapproved neighbors remain visible. See [v21 technical checks](docs/v21_worklog_zh.md). Neither the public offline demo nor deterministic tests certify this model pipeline.
 
 For expanded sources run `python scripts/bootstrap_official_v18.py` after the template bootstrap. Only reviewed article substance is accepted; dynamic HTML wrappers and locally cached bytes are tracked separately. Full downloaded sources stay local. The v18 offline UI shows retrieved source locations but retains the historical deterministic rules; it does not simulate two-model inference.
 

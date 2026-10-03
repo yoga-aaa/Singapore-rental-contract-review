@@ -188,6 +188,31 @@ class V18FreezeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'cumulative'): run_v18_regression.main('v20')
         self.assertFalse((self.bundle.parent/'run_v20').exists())
 
+    def test_v21_preflight_free_and_live_campaign_check_before_key(self):
+        for relative in ['scripts/run_v21_regression.py','scripts/score_v18_regression.py','scripts/diagnose_v21_run.py']:
+            self.write(self.repo/relative,'# synthetic v21 frozen entry\n')
+            self.write(self.bundle/('snapshot/'+relative),'# synthetic v21 frozen entry\n')
+            self.manifest['runtime_files'].append({'repo_path':relative,'snapshot_path':'snapshot/'+relative,
+                'sha256':byte_hash(self.repo/relative)})
+        self.manifest['freeze_version']='v21'
+        self.config.update(review_version='v21',retrieval_limit=15,max_total_tokens=350000)
+        self.write_json(self.bundle/'configuration.json',self.config); self.refresh_manifest()
+        output=io.StringIO()
+        with (patch.object(run_v18_regression,'REPO',self.repo),
+              patch.object(sys,'argv',['runner','--bundle',str(self.bundle)]),
+              patch.object(run_v18_regression,'local_api_key',side_effect=AssertionError('key')),
+              patch.object(run_v18_regression,'verify_campaign',side_effect=AssertionError('campaign')),
+              redirect_stdout(output)):
+            run_v18_regression.main('v21')
+        self.assertEqual(json.loads(output.getvalue())['predictions'],0)
+        authorization=self.bundle.parent/'approval.json'; self.write_json(authorization,{})
+        with (patch.object(run_v18_regression,'REPO',self.repo),
+              patch.object(sys,'argv',['runner','--bundle',str(self.bundle),'--live','--authorization',str(authorization)]),
+              patch.object(run_v18_regression,'verify_authorization',return_value={}),
+              patch.object(run_v18_regression,'local_api_key',side_effect=AssertionError('key'))):
+            with self.assertRaisesRegex(ValueError,'cumulative'): run_v18_regression.main('v21')
+        self.assertFalse((self.bundle.parent/'run_v21').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

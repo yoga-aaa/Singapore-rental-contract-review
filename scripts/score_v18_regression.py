@@ -20,7 +20,7 @@ def lines(path):
 
 def score(bundle: Path, run: Path, audit: Path | None = None) -> dict:
     manifest = read_json(bundle/'manifest.json')
-    require(manifest['freeze_version'] in {'v18','v19','v20'}, 'Expected expanded-source freeze')
+    require(manifest['freeze_version'] in {'v18','v19','v20','v21'}, 'Expected expanded-source freeze')
     for entry in manifest['artifacts']:
         require(byte_hash(safe_member(bundle,entry['path'])) == entry['sha256'], 'Frozen artifact changed')
     started, finish = read_json(run/'run_started.json'), read_json(run/'run_finished.json')
